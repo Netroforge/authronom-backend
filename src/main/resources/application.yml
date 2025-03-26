@@ -1,0 +1,63 @@
+server:
+  port: ${AUTHRONOM_SERVER_PORT:8080}
+
+logging:
+  level:
+    root: INFO
+#    org.springframework.security.web.FilterChainProxy: DEBUG
+
+spring:
+  application:
+    name: ${AUTHRONOM_SERVICE_NAME:authronom-backend}
+  liquibase:
+    enabled: false
+    change-log: classpath:database/db.changelog.yaml
+    contexts: prod, dev
+  datasource:
+    primary:
+      url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5435}/${AUTHRONOM_PG_DB:dev_authronom_backend}
+      username: ${AUTHRONOM_PG_USER:user}
+      password: ${AUTHRONOM_PG_PASSWORD:user}
+      driver-class-name: "org.postgresql.Driver"
+      hikari:
+        schema: dev_authronom_backend
+      liquibase:
+        change-log: classpath:/db/changelog/db.changelog-primary.yaml
+        default-schema: dev_authronom_backend
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          test-client:
+            registration:
+              client-id: "test-client"
+              client-authentication-methods:
+                - "none"
+              authorization-grant-types:
+                - "authorization_code"
+              redirect-uris:
+                - "http://127.0.0.1:8081/callback"
+                - "http://localhost:8081/callback"
+              scopes:
+                - "openid"
+                - "email"
+                - "profile"
+            require-authorization-consent: false
+            require-proof-key: true
+      client:
+        registration:
+          google:
+            provider: google
+            client-id: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_ID}
+            client-secret: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+        provider:
+          google:
+            token-uri: "https://oauth2.googleapis.com/token"
+            jwk-set-uri: "https://www.googleapis.com/oauth2/v3/certs"
+            issuer-uri: "https://accounts.google.com"
+
+springdoc:
+  show-actuator: true
+  show-oauth2-endpoints: true

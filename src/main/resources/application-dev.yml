@@ -1,0 +1,6 @@
+logging:
+  level:
+    org.springframework.jdbc: DEBUG
+    org.springframework: INFO
+    org.hibernate: ERROR
+    org.springframework.security: DEBUG

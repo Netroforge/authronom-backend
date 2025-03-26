@@ -1,0 +1,56 @@
+name: PR
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start dependencies
+        run: |
+          docker compose up -d
+
+      - name: Get IPs of dependencies
+        id: dependencies-ipaddresses
+        run: |
+          echo "postgres_ipaddress=$(docker inspect authronom-backend-postgres | jq '.[0].NetworkSettings.Networks["authronom-backend_default"].IPAddress' | tr -d '"\n')" >> $GITHUB_OUTPUT
+          echo "redis_ipaddress=$(docker inspect authronom-backend-redis | jq '.[0].NetworkSettings.Networks["authronom-backend_default"].IPAddress' | tr -d '"\n')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=authronom-backend_default
+
+      - name: Docker Metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            docker.pkg.github.com/authronom-backend
+          tags: |
+            type=raw,value=${{ github.run_number }}-tests-latest
+
+      - name: Build and push container
+        id: docker-build-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          add-hosts: |
+            authronom-backend-postgres:${{ steps.dependencies-ipaddresses.outputs.postgres_ipaddress }}
+            authronom-backend-redis:${{ steps.dependencies-ipaddresses.outputs.redis_ipaddress }}
+          target: tests
+          provenance: false
