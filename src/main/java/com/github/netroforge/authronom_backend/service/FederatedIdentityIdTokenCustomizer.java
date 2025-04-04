@@ -8,11 +8,14 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Service
+/**
+ * More info:
+ * https://docs.spring.io/spring-authorization-server/reference/core-model-components.html#oauth2-token-customizer
+ * https://docs.spring.io/spring-authorization-server/reference/guides/how-to-userinfo.html#customize-id-token
+ */
 public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
 
     private static final Set<String> ID_TOKEN_CLAIMS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -60,5 +63,4 @@ public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCust
 
         return new HashMap<>(claims);
     }
-
 }

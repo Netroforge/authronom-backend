@@ -15,7 +15,7 @@ public class SecurityFilterLoggerConfig {
     @Bean
     public String logSecurityFilters(FilterChainProxy filterChainProxy) {
         StringBuilder output = new StringBuilder();
-        output.append("\n🔍 Spring Security Filter Chains:");
+        output.append("Spring Security Filter Chains:");
         List<SecurityFilterChain> filterChains = filterChainProxy.getFilterChains();
         for (int i = 0; i < filterChains.size(); i++) {
             SecurityFilterChain chain = filterChains.get(i);
@@ -25,9 +25,9 @@ public class SecurityFilterLoggerConfig {
                     .map(filter -> filter.getClass().getSimpleName())
                     .toList();
 
-            output.append("\n🔹 Filter Chain #").append(i + 1);
-            output.append("\n   Request Matcher: ").append(chain); // Prints the matcher details
-            output.append("\n   Filters:");
+            output.append("\n Filter Chain #").append(i + 1);
+            output.append("\n  Request Matcher: ").append(chain); // Prints the matcher details
+            output.append("\n  Filters:");
             filters.forEach(filter -> output.append("\n   - ").append(filter));
         }
         log.info(output.toString());

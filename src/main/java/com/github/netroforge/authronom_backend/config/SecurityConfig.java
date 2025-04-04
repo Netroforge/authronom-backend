@@ -4,6 +4,7 @@ import com.github.netroforge.authronom_backend.properties.CorsProperties;
 import com.github.netroforge.authronom_backend.properties.SecurityProperties;
 import com.github.netroforge.authronom_backend.repository.UserRepository;
 import com.github.netroforge.authronom_backend.service.CustomUserDetailsService;
+import com.github.netroforge.authronom_backend.service.FederatedIdentityIdTokenCustomizer;
 import com.github.netroforge.authronom_backend.service.FormLoginAuthenticationSuccessHandler;
 import com.github.netroforge.authronom_backend.service.Oauth2LoginAuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +49,12 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .anonymous(AbstractHttpConfigurer::disable)
-                .sessionManagement((customizer) -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .sessionManagement((customizer) ->
+                        customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().permitAll()
+                )
                 .build();
     }
 
@@ -59,16 +64,21 @@ public class SecurityConfig {
             HttpSecurity http,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
     ) throws Exception {
-        http.securityMatcher("/auth/**")
-                .sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().authenticated()
-                )
+        http
+                .securityMatcher("/auth/**")
                 .cors(corsConfigurerCustomizer)
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
-                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
-                ));
+                .sessionManagement(configurer ->
+                        configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().authenticated()
+                )
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                        )
+                );
 
         // Transfer access token in HTTP parameters of reqeust
         DefaultBearerTokenResolver tokenResolver = new DefaultBearerTokenResolver();
@@ -94,8 +104,12 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .anonymous(AbstractHttpConfigurer::disable)
-                .sessionManagement((customizer) -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .sessionManagement((customizer) ->
+                        customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().permitAll()
+                )
                 .build();
     }
 
@@ -121,11 +135,12 @@ public class SecurityConfig {
                         authorize.anyRequest().authenticated()
                 )
                 // Redirect to the OAuth 2.0 Login endpoint when not authenticated from the authorization endpoint
-                .exceptionHandling((exceptions) -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint(securityProperties.getLoginUrlAuthenticationEntryPoint()),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        )
+                .exceptionHandling((exceptions) ->
+                        exceptions
+                                .defaultAuthenticationEntryPointFor(
+                                        new LoginUrlAuthenticationEntryPoint(securityProperties.getLoginUrlAuthenticationEntryPoint()),
+                                        new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                                )
                 );
         return http.build();
     }
@@ -142,8 +157,9 @@ public class SecurityConfig {
         http
                 .cors(corsConfigurerCustomizer)
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests((authorize) ->
+                        authorize
+                                .anyRequest().authenticated()
                 )
                 // OAuth2 Login handles the redirect to the OAuth 2.0 Login endpoint
                 // from the authorization server filter chain
@@ -190,6 +206,16 @@ public class SecurityConfig {
             }
             return corsConfiguration;
         });
+    }
+
+    /**
+     * More info:
+     * https://docs.spring.io/spring-authorization-server/reference/core-model-components.html#oauth2-token-customizer
+     * https://docs.spring.io/spring-authorization-server/reference/guides/how-to-userinfo.html#customize-id-token
+     */
+    @Bean
+    public FederatedIdentityIdTokenCustomizer federatedIdentityIdTokenCustomizer() {
+        return new FederatedIdentityIdTokenCustomizer();
     }
 
     @Bean
