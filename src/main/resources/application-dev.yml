@@ -4,3 +4,80 @@ logging:
     org.springframework: INFO
     org.hibernate: ERROR
     org.springframework.security: DEBUG
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
+      authorizationserver:
+        client:
+          frontend:
+            registration:
+              client-id: "frontend"
+              client-authentication-methods:
+                - "none"
+              authorization-grant-types:
+                - "authorization_code"
+              redirect-uris:
+                - "http://localhost:8081/callback"
+              scopes:
+                - "openid"
+                - "email"
+                - "profile"
+            require-authorization-consent: false
+            require-proof-key: true
+      client:
+        registration:
+          google:
+            provider: google
+            client-id: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_ID}
+            client-secret: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+        provider:
+          google:
+            token-uri: "https://oauth2.googleapis.com/token"
+            jwk-set-uri: "https://www.googleapis.com/oauth2/v3/certs"
+            issuer-uri: "https://accounts.google.com"
+
+cors:
+#  allowed-origin-patterns:
+#    - http://localhost:*
+#    - http://localhost:8081
+#    - http://127.0.0.1:*
+  allowed-origins:
+    - http://localhost:8081
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+  exposed-headers:
+    - Authorization
+    - Content-Type
+    - location
+  allow-credentials: true
+  max-age: 3600
+
+user:
+  registration:
+    confirmation-email-from: ${AUTHRONOM_USER_REGISTRATION_CONFIRMATION_EMAIL_FROM}
+    confirmation-email-from-name: "Authronom (dev)"
+    confirmation-email-subject: "Email confirmation"
+
+security:
+  login-url-authentication-entry-point: "http://localhost:8081/login"
+  form-login-page: "http://localhost:8081"
+  form-login-failure-url: "http://localhost:8081/formLoginFailure"
+  form-login-processing-path: "/login"
+  oauth2-login-page: "http://localhost:8081"
+  oauth2-login-success-url: "http://localhost:8081/successLogin"
+  oauth2-login-failure-url: "http://localhost:8081/oauth2LoginFailure"

@@ -1,40 +1,58 @@
 package com.github.netroforge.authronom_backend.service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-
+import com.fasterxml.uuid.Generators;
+import com.github.netroforge.authronom_backend.repository.UserRepository;
+import com.github.netroforge.authronom_backend.repository.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 @Slf4j
 @Service
-public final class UserRepositoryOAuth2UserHandler implements Consumer<OAuth2User> {
+public final class UserRepositoryOAuth2UserHandler {
 
-	private final UserRepository userRepository = new UserRepository();
+    private final UserRepository userRepository;
 
-	@Override
-	public void accept(OAuth2User user) {
-		// Capture user in a local data store on first authentication
-		if (this.userRepository.findByName(user.getName()) == null) {
-            log.info("Saving first time user: name={}, claims={}, authorities={}", user.getName(), user.getAttributes(), user.getAuthorities());
-			this.userRepository.save(user);
-		}
-	}
+    public UserRepositoryOAuth2UserHandler(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-	static class UserRepository {
+    public void accept(
+            OAuth2User oAuth2User,
+            String authorizedClientRegistrationId
+    ) {
+        // Capture user in a local data store on first authentication
+        log.info("UserRepositoryOAuth2UserHandler {}", oAuth2User);
 
-		private final Map<String, OAuth2User> userCache = new ConcurrentHashMap<>();
-
-		public OAuth2User findByName(String name) {
-			return this.userCache.get(name);
-		}
-
-		public void save(OAuth2User oauth2User) {
-			this.userCache.put(oauth2User.getName(), oauth2User);
-		}
-
-	}
-
+        if ("google".equals(authorizedClientRegistrationId)) {
+            log.info(
+                    "Saving first time user: name={}, claims={}, authorities={}",
+                    oAuth2User.getName(),
+                    oAuth2User.getAttributes(),
+                    oAuth2User.getAuthorities()
+            );
+            String googleId = oAuth2User.getAttribute("sub");
+            User user = userRepository.findByGoogleId(googleId);
+            if (user == null) {
+                User userByEmail = userRepository.findByEmail(oAuth2User.getAttribute("email"));
+                if (userByEmail != null) {
+                    userByEmail.setGoogleId(googleId);
+					userByEmail.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                    userRepository.save(userByEmail);
+                } else {
+                    user = new User();
+                    user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
+                    user.setEmail(oAuth2User.getAttribute("email"));
+                    user.setGoogleId(googleId);
+                    user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                    user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                    user.setNew(true);
+                    userRepository.save(user);
+                }
+            }
+        }
+    }
 }

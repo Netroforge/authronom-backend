@@ -3,11 +3,11 @@ services:
     container_name: authronom-backend-postgres
     image: postgres:17.3
     environment:
-      POSTGRES_USER: "user"
-      POSTGRES_PASSWORD: "user"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: "authronom-backend"
     ports:
-      - '5435:5432'
+      - '5432:5432'
     volumes:
       - type: volume
         source: postgresql-data
@@ -19,7 +19,6 @@ services:
   authronom-backend-redis:
     container_name: authronom-backend-redis
     image: redis:7.4.2
-    restart: always
     command: redis-server --save 20 1 --loglevel warning --requirepass user
     ports:
       - '6379:6379'

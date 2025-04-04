@@ -15,49 +15,47 @@ spring:
     contexts: prod, dev
   datasource:
     primary:
-      url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5435}/${AUTHRONOM_PG_DB:dev_authronom_backend}
-      username: ${AUTHRONOM_PG_USER:user}
-      password: ${AUTHRONOM_PG_PASSWORD:user}
+      url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5432}/${AUTHRONOM_PG_DB:dev_authronom_backend}
+      username: ${AUTHRONOM_PG_USER:postgres}
+      password: ${AUTHRONOM_PG_PASSWORD:postgres}
       driver-class-name: "org.postgresql.Driver"
       hikari:
         schema: dev_authronom_backend
       liquibase:
         change-log: classpath:/db/changelog/db.changelog-primary.yaml
         default-schema: dev_authronom_backend
-  security:
-    oauth2:
-      authorizationserver:
-        client:
-          test-client:
-            registration:
-              client-id: "test-client"
-              client-authentication-methods:
-                - "none"
-              authorization-grant-types:
-                - "authorization_code"
-              redirect-uris:
-                - "http://127.0.0.1:8081/callback"
-                - "http://localhost:8081/callback"
-              scopes:
-                - "openid"
-                - "email"
-                - "profile"
-            require-authorization-consent: false
-            require-proof-key: true
-      client:
-        registration:
-          google:
-            provider: google
-            client-id: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_ID}
-            client-secret: ${AUTHRONOM_BACKEND_GOOGLE_CLIENT_SECRET}
-            scope: openid, profile, email
-            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
-        provider:
-          google:
-            token-uri: "https://oauth2.googleapis.com/token"
-            jwk-set-uri: "https://www.googleapis.com/oauth2/v3/certs"
-            issuer-uri: "https://accounts.google.com"
 
 springdoc:
   show-actuator: true
   show-oauth2-endpoints: true
+
+db-scheduler:
+  polling-interval: 10s
+  shutdown-max-wait: 10m
+  heartbeat-interval: 5m
+  missed-heartbeats-limit: 6
+  check-old-log-records-interval: 1h
+  retention-of-log-records: 7d
+
+db-scheduler-ui:
+  history: true
+  log-limit: 1000
+
+email:
+  server: ${AUTHRONOM_EMAIL_SERVER}
+  port: ${AUTHRONOM_EMAIL_PORT}
+  ssl: ${AUTHRONOM_EMAIL_SSL}
+  username: ${AUTHRONOM_EMAIL_USERNAME}
+  password: ${AUTHRONOM_EMAIL_PASSWORD}
+
+user:
+  registration:
+    email-enabled: true
+    dangling-confirmation-code-deletion-interval: 5h
+    dangling-confirmation-code-retention-threshold: 5h
+    confirmation-code-live-time: 5m
+    start-user-registration-calls-rate-limit-within-second: 5
+    finalize-user-registration-calls-rate-limit-within-second: 5
+
+security:
+  bcrypt-password-encoder-strength: 12

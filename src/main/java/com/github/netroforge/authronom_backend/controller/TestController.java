@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
-public class RootController {
+public class TestController {
 
-    @GetMapping("/")
+    @GetMapping("/auth/test")
     public Long test(Authentication authentication) {
         return ThreadLocalRandom.current().nextLong();
     }
