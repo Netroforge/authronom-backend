@@ -9,6 +9,6 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserStartRegistrationRequestDto {
-    private String email;
+public class UserChangePasswordFinalizeResponseDto {
+    private boolean processed;
 }

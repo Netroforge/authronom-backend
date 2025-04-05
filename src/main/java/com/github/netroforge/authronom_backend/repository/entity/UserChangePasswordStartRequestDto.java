@@ -1,6 +1,5 @@
 package com.github.netroforge.authronom_backend.repository.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,7 +7,5 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
-public class UserFinalizeRegistrationResponseDto {
-    private boolean registered;
+public class UserChangePasswordStartRequestDto {
 }

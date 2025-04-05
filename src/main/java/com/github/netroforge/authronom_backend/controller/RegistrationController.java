@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-public class AuthenticationController {
+public class RegistrationController {
     private final UserService userService;
 
-    public AuthenticationController(UserService userService) {
+    public RegistrationController(UserService userService) {
         this.userService = userService;
     }
 
@@ -36,7 +36,7 @@ public class AuthenticationController {
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = UserStartRegistrationResponseDto.class)
+                                            schema = @Schema(implementation = UserRegistrationStartResponseDto.class)
                                     )
                             )
                     }
@@ -64,11 +64,11 @@ public class AuthenticationController {
     })
     @PostMapping("/registration/start")
     public ResponseEntity<?> startRegister(
-            @RequestBody UserStartRegistrationRequestDto userStartRegistrationRequestDto
+            @RequestBody UserRegistrationStartRequestDto userRegistrationStartRequestDto
     ) {
         try {
-            UserStartRegistrationResponseDto userRegistrationResponseDto =
-                    userService.startUserRegistration(userStartRegistrationRequestDto);
+            UserRegistrationStartResponseDto userRegistrationResponseDto =
+                    userService.startUserRegistration(userRegistrationStartRequestDto);
             return ResponseEntity.ok(userRegistrationResponseDto);
         } catch (Exception e) {
             log.error("Error", e);
@@ -89,7 +89,7 @@ public class AuthenticationController {
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     array = @ArraySchema(
-                                            schema = @Schema(implementation = UserFinalizeRegistrationResponseDto.class)
+                                            schema = @Schema(implementation = UserRegistrationFinalizeResponseDto.class)
                                     )
                             )
                     }
@@ -117,12 +117,12 @@ public class AuthenticationController {
     })
     @PostMapping("/registration/finalize")
     public ResponseEntity<?> finalizeRegister(
-            @RequestBody UserFinalizeRegistrationRequestDto userFinalizeRegistrationRequestDto
+            @RequestBody UserRegistrationFinalizeRequestDto userRegistrationFinalizeRequestDto
     ) {
         try {
-            UserFinalizeRegistrationResponseDto userFinalizeRegistrationResponseDto =
-                    userService.finalizeUserRegistration(userFinalizeRegistrationRequestDto);
-            return ResponseEntity.ok(userFinalizeRegistrationResponseDto);
+            UserRegistrationFinalizeResponseDto userRegistrationFinalizeResponseDto =
+                    userService.finalizeUserRegistration(userRegistrationFinalizeRequestDto);
+            return ResponseEntity.ok(userRegistrationFinalizeResponseDto);
         } catch (Exception e) {
             log.error("Error", e);
             return ResponseEntity

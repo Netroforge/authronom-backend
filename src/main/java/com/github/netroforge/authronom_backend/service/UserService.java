@@ -5,10 +5,12 @@ import com.github.netroforge.authronom_backend.properties.UserRegistrationProper
 import com.github.netroforge.authronom_backend.repository.UserEmailVerificationRepository;
 import com.github.netroforge.authronom_backend.repository.UserRepository;
 import com.github.netroforge.authronom_backend.repository.entity.*;
+import com.github.netroforge.authronom_backend.service.dto.AuthorizedUser;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTask;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTaskData;
+import com.github.netroforge.authronom_backend.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -29,47 +31,41 @@ public class UserService {
     private final UserRegistrationProperties userRegistrationProperties;
     private final DbschedulerService dbschedulerService;
     private final UserEmailVerificationRepository userEmailVerificationRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(
             UserRepository userRepository,
             UserRegistrationProperties userRegistrationProperties,
             DbschedulerService dbschedulerService,
-            UserEmailVerificationRepository userEmailVerificationRepository
+            UserEmailVerificationRepository userEmailVerificationRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.userRegistrationProperties = userRegistrationProperties;
         this.dbschedulerService = dbschedulerService;
         this.userEmailVerificationRepository = userEmailVerificationRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public UserStartRegistrationResponseDto startUserRegistration(
-            UserStartRegistrationRequestDto userStartRegistrationRequestDto
+    public UserRegistrationStartResponseDto startUserRegistration(
+            UserRegistrationStartRequestDto userRegistrationStartRequestDto
     ) {
-        // Generate a random number with the specified number of digits
-        // Inspired by https://dev.to/dev_eliud/implementing-email-code-verification-in-java-spring-boot-2c18
-        StringBuilder confirmationCodeBuilder = new StringBuilder(CODE_LENGTH);
-        for (int i = 0; i < CODE_LENGTH; i++) {
-            confirmationCodeBuilder.append(
-                    CONFIRMATION_CODE_CHARACTERS
-                            .charAt(SECURE_RANDOM.nextInt(CONFIRMATION_CODE_CHARACTERS.length())))
-            ;
-        }
-        String confirmationCode = confirmationCodeBuilder.toString();
+        String confirmationCode = generateConfirmationCode();
 
         dbschedulerService.scheduleIfNotExists(
                 UserEmailConfirmationSendTask.getTaskDescriptor()
                         .instance(Generators.timeBasedEpochGenerator().generate().toString())
                         .data(new UserEmailConfirmationSendTaskData(
-                                userStartRegistrationRequestDto.getEmail(),
+                                userRegistrationStartRequestDto.getEmail(),
                                 confirmationCode
                         ))
                         .scheduledTo(Instant.now())
         );
-        return new UserStartRegistrationResponseDto(true);
+        return new UserRegistrationStartResponseDto(true);
     }
 
-    public UserFinalizeRegistrationResponseDto finalizeUserRegistration(
-            UserFinalizeRegistrationRequestDto userFinalizeRegistrationRequestDto
+    public UserRegistrationFinalizeResponseDto finalizeUserRegistration(
+            UserRegistrationFinalizeRequestDto userRegistrationFinalizeRequestDto
     ) {
         if (!userRegistrationProperties.isEmailEnabled()) {
             throw new IllegalStateException(
@@ -78,17 +74,17 @@ public class UserService {
         }
 
         // Do checks
-        Assert.hasText(userFinalizeRegistrationRequestDto.getEmail(), "Please enter a valid email address.");
-        Assert.isTrue(userFinalizeRegistrationRequestDto.getEmail().matches("^[^@]+@[^@]+$"), "Please enter a valid email address.");
-        Assert.hasText(userFinalizeRegistrationRequestDto.getConfirmationCode(), "Please enter a valid confirmation code.");
-        Assert.isTrue(userFinalizeRegistrationRequestDto.getConfirmationCode().matches("^[" + CONFIRMATION_CODE_CHARACTERS + "]+$"), "Please enter a valid confirmation code.");
-        Assert.hasText(userFinalizeRegistrationRequestDto.getPassword(), "Password should be at least 6 characters.");
-        Assert.isTrue(userFinalizeRegistrationRequestDto.getPassword().length() >= 6, "Password should be at least 6 characters.");
+        Assert.hasText(userRegistrationFinalizeRequestDto.getEmail(), "Please enter a valid email address.");
+        Assert.isTrue(userRegistrationFinalizeRequestDto.getEmail().matches("^[^@]+@[^@]+$"), "Please enter a valid email address.");
+        Assert.hasText(userRegistrationFinalizeRequestDto.getConfirmationCode(), "Please enter a valid confirmation code.");
+        Assert.isTrue(userRegistrationFinalizeRequestDto.getConfirmationCode().matches("^[" + CONFIRMATION_CODE_CHARACTERS + "]+$"), "Please enter a valid confirmation code.");
+        Assert.hasText(userRegistrationFinalizeRequestDto.getPassword(), "Password should be at least 6 characters.");
+        Assert.isTrue(userRegistrationFinalizeRequestDto.getPassword().length() >= 6, "Password should be at least 6 characters.");
 
         // Check confirmation code
         UserEmailVerification userEmailVerification = userEmailVerificationRepository.findByEmailAndConfirmationCode(
-                userFinalizeRegistrationRequestDto.getEmail(),
-                userFinalizeRegistrationRequestDto.getConfirmationCode()
+                userRegistrationFinalizeRequestDto.getEmail(),
+                userRegistrationFinalizeRequestDto.getConfirmationCode()
         );
         if (userEmailVerification == null) {
             throw new IllegalStateException(
@@ -108,25 +104,97 @@ public class UserService {
         User user = new User();
         user.setNew(true);
         user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
-        user.setEmail(userFinalizeRegistrationRequestDto.getEmail());
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        user.setPassword(passwordEncoder.encode(userFinalizeRegistrationRequestDto.getPassword()));
+        user.setEmail(userRegistrationFinalizeRequestDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userRegistrationFinalizeRequestDto.getPassword()));
         user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
         user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
         userRepository.save(user);
 
         userEmailVerificationRepository.deleteByEmailAndConfirmationCode(
-                userFinalizeRegistrationRequestDto.getEmail(),
-                userFinalizeRegistrationRequestDto.getConfirmationCode()
+                userRegistrationFinalizeRequestDto.getEmail(),
+                userRegistrationFinalizeRequestDto.getConfirmationCode()
         );
 
-        return new UserFinalizeRegistrationResponseDto(true);
+        return new UserRegistrationFinalizeResponseDto(true);
     }
 
-    public UserLoginResponseDto login(
-            UserLoginRequestDto userLoginRequestDto
-    ) {
+    public UserChangePasswordStartResponseDto startUserChangePassword() {
+        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
+        User user = userRepository.findByUid(authorizedUser.getUid());
+        if (user == null) {
+            throw new IllegalStateException("Internal server error.");
+        }
 
-        return new UserLoginResponseDto(true);
+        String confirmationCode = generateConfirmationCode();
+
+        dbschedulerService.scheduleIfNotExists(
+                UserEmailConfirmationSendTask.getTaskDescriptor()
+                        .instance(Generators.timeBasedEpochGenerator().generate().toString())
+                        .data(new UserEmailConfirmationSendTaskData(
+                                user.getEmail(),
+                                confirmationCode
+                        ))
+                        .scheduledTo(Instant.now())
+        );
+        return new UserChangePasswordStartResponseDto(user.getEmail());
+    }
+
+    public UserChangePasswordFinalizeResponseDto finalizeUserChangePassword(
+            UserChangePasswordFinalizeRequestDto userChangePasswordFinalizeRequestDto
+    ) {
+        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
+        User user = userRepository.findByUid(authorizedUser.getUid());
+        if (user == null) {
+            throw new IllegalStateException("Internal server error.");
+        }
+
+        // Do checks
+        Assert.hasText(userChangePasswordFinalizeRequestDto.getConfirmationCode(), "Please enter a valid confirmation code.");
+        Assert.isTrue(userChangePasswordFinalizeRequestDto.getConfirmationCode().matches("^[" + CONFIRMATION_CODE_CHARACTERS + "]+$"), "Please enter a valid confirmation code.");
+        Assert.hasText(userChangePasswordFinalizeRequestDto.getNewPassword(), "Password should be at least 6 characters.");
+        Assert.isTrue(userChangePasswordFinalizeRequestDto.getNewPassword().length() >= 6, "Password should be at least 6 characters.");
+
+        // Check confirmation code
+        UserEmailVerification userEmailVerification = userEmailVerificationRepository.findByEmailAndConfirmationCode(
+                user.getEmail(),
+                userChangePasswordFinalizeRequestDto.getConfirmationCode()
+        );
+        if (userEmailVerification == null) {
+            throw new IllegalStateException(
+                    "Wrong confirmation code provided."
+            );
+        }
+        if (Duration.between(
+                userEmailVerification.getCreatedAt(),
+                LocalDateTime.now(ZoneOffset.UTC)
+        ).compareTo(userRegistrationProperties.getConfirmationCodeLiveTime()) > 0) {
+            throw new IllegalStateException(
+                    "Confirmation code expired."
+            );
+        }
+
+        // Update a user in the database
+        user.setPassword(passwordEncoder.encode(userChangePasswordFinalizeRequestDto.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+        userRepository.save(user);
+
+        userEmailVerificationRepository.deleteByEmailAndConfirmationCode(
+                user.getEmail(),
+                userChangePasswordFinalizeRequestDto.getConfirmationCode()
+        );
+
+        return new UserChangePasswordFinalizeResponseDto(true);
+    }
+
+    private String generateConfirmationCode() {
+        // Generate a random number with the specified number of digits
+        // Inspired by https://dev.to/dev_eliud/implementing-email-code-verification-in-java-spring-boot-2c18
+        StringBuilder confirmationCodeBuilder = new StringBuilder(CODE_LENGTH);
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            confirmationCodeBuilder.append(
+                    CONFIRMATION_CODE_CHARACTERS
+                            .charAt(SECURE_RANDOM.nextInt(CONFIRMATION_CODE_CHARACTERS.length())));
+        }
+        return confirmationCodeBuilder.toString();
     }
 }

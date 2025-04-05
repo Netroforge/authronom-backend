@@ -9,8 +9,6 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserFinalizeRegistrationRequestDto {
-    private String email;
-    private String confirmationCode;
-    private String password;
+public class UserRegistrationFinalizeResponseDto {
+    private boolean registered;
 }
