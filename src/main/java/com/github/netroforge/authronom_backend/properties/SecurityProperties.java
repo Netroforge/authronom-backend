@@ -15,7 +15,6 @@ public class SecurityProperties {
 
     // Form login
     private String formLoginPage;
-    private String formLoginFailureUrl;
     private String formLoginProcessingPath;
     private int bcryptPasswordEncoderStrength;
 

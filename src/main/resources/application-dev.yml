@@ -76,7 +76,6 @@ user:
 security:
   login-url-authentication-entry-point: "http://localhost:8081/login"
   form-login-page: "http://localhost:8081"
-  form-login-failure-url: "http://localhost:8081/formLoginFailure"
   form-login-processing-path: "/login"
   oauth2-login-page: "http://localhost:8081"
   oauth2-login-success-url: "http://localhost:8081/successLogin"

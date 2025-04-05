@@ -3,10 +3,7 @@ package com.github.netroforge.authronom_backend.config;
 import com.github.netroforge.authronom_backend.properties.CorsProperties;
 import com.github.netroforge.authronom_backend.properties.SecurityProperties;
 import com.github.netroforge.authronom_backend.repository.UserRepository;
-import com.github.netroforge.authronom_backend.service.CustomUserDetailsService;
-import com.github.netroforge.authronom_backend.service.FederatedIdentityIdTokenCustomizer;
-import com.github.netroforge.authronom_backend.service.FormLoginAuthenticationSuccessHandler;
-import com.github.netroforge.authronom_backend.service.Oauth2LoginAuthenticationSuccessHandler;
+import com.github.netroforge.authronom_backend.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -124,9 +121,9 @@ public class SecurityConfig {
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
 
         http
+                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .cors(corsConfigurerCustomizer)
                 .csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, (authorizationServer) ->
                         authorizationServer
                                 .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
@@ -150,6 +147,7 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             FormLoginAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler,
+            FormLoginAuthenticationFailureHandler formLoginAuthenticationFailureHandler,
             Oauth2LoginAuthenticationSuccessHandler oauth2LoginAuthenticationSuccessHandler,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer,
             SecurityProperties securityProperties
@@ -178,8 +176,8 @@ public class SecurityConfig {
                     public void customize(FormLoginConfigurer<HttpSecurity> httpSecurityFormLoginConfigurer) {
                         httpSecurityFormLoginConfigurer.usernameParameter("email");
                         httpSecurityFormLoginConfigurer.successHandler(formLoginAuthenticationSuccessHandler);
+                        httpSecurityFormLoginConfigurer.failureHandler(formLoginAuthenticationFailureHandler);
                         httpSecurityFormLoginConfigurer.loginPage(securityProperties.getFormLoginPage());
-                        httpSecurityFormLoginConfigurer.failureUrl(securityProperties.getFormLoginFailureUrl());
                         httpSecurityFormLoginConfigurer.loginProcessingUrl(securityProperties.getFormLoginProcessingPath());
                     }
                 });
