@@ -2,3 +2,8 @@
 
 # authronom-backend
 The Single Sign-On Multi-Factor auth server backend
+
+## Email change
+We send confirmation code to the old and new,
+so we follow best practices from OWASP:
+https://owasp.org/www-community/pages/controls/Changing_Registered_Email_Address_For_An_Account

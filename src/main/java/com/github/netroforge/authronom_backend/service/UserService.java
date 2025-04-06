@@ -38,8 +38,7 @@ public class UserService {
             UserRegistrationProperties userRegistrationProperties,
             DbschedulerService dbschedulerService,
             UserEmailVerificationRepository userEmailVerificationRepository,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userRegistrationProperties = userRegistrationProperties;
         this.dbschedulerService = dbschedulerService;
@@ -184,6 +183,123 @@ public class UserService {
         );
 
         return new UserChangePasswordFinalizeResponseDto(true);
+    }
+
+
+    public UserChangeEmailStartResponseDto startUserChangeEmail(
+            UserChangeEmailStartRequestDto userChangeEmailStartRequestDto
+    ) {
+        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
+        User user = userRepository.findByUid(authorizedUser.getUid());
+        if (user == null) {
+            throw new IllegalStateException("Internal server error.");
+        }
+
+        // Validate new email
+        Assert.hasText(userChangeEmailStartRequestDto.getNewEmail(), "Please enter a valid email address.");
+        Assert.isTrue(userChangeEmailStartRequestDto.getNewEmail().matches("^[^@]+@[^@]+$"), "Please enter a valid email address.");
+
+        // Generate confirmation codes for old email
+        String oldEmailConfirmationCode = generateConfirmationCode();
+        // Schedule email to old email address
+        dbschedulerService.scheduleIfNotExists(
+                UserEmailConfirmationSendTask.getTaskDescriptor()
+                        .instance(Generators.timeBasedEpochGenerator().generate().toString())
+                        .data(new UserEmailConfirmationSendTaskData(
+                                user.getEmail(),
+                                oldEmailConfirmationCode))
+                        .scheduledTo(Instant.now()));
+
+        // Generate confirmation codes for new email
+        String newEmailConfirmationCode = generateConfirmationCode();
+        // Schedule email to new email address
+        dbschedulerService.scheduleIfNotExists(
+                UserEmailConfirmationSendTask.getTaskDescriptor()
+                        .instance(Generators.timeBasedEpochGenerator().generate().toString())
+                        .data(new UserEmailConfirmationSendTaskData(
+                                userChangeEmailStartRequestDto.getNewEmail(),
+                                newEmailConfirmationCode))
+                        .scheduledTo(Instant.now()));
+
+        return new UserChangeEmailStartResponseDto(
+                user.getEmail(),
+                userChangeEmailStartRequestDto.getNewEmail()
+        );
+    }
+
+    public UserChangeEmailFinalizeResponseDto finalizeUserChangeEmail(
+            UserChangeEmailFinalizeRequestDto userChangeEmailFinalizeRequestDto
+    ) {
+        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
+        User user = userRepository.findByUid(authorizedUser.getUid());
+        if (user == null) {
+            throw new IllegalStateException("Internal server error.");
+        }
+        String oldEmail = user.getEmail();
+
+        // Do checks
+        Assert.hasText(userChangeEmailFinalizeRequestDto.getNewEmail(), "Please enter a valid email address.");
+        Assert.isTrue(userChangeEmailFinalizeRequestDto.getNewEmail().matches("^[^@]+@[^@]+$"), "Please enter a valid email address.");
+        Assert.hasText(userChangeEmailFinalizeRequestDto.getOldEmailConfirmationCode(), "Please enter a valid confirmation code for old email.");
+        Assert.isTrue(userChangeEmailFinalizeRequestDto.getOldEmailConfirmationCode().matches("^[" + CONFIRMATION_CODE_CHARACTERS + "]+$"), "Please enter a valid confirmation code for old email.");
+        Assert.hasText(userChangeEmailFinalizeRequestDto.getNewEmailConfirmationCode(), "Please enter a valid confirmation code for new email.");
+        Assert.isTrue(userChangeEmailFinalizeRequestDto.getNewEmailConfirmationCode().matches("^[" + CONFIRMATION_CODE_CHARACTERS + "]+$"), "Please enter a valid confirmation code for new email.");
+
+        // Check confirmation code for old email
+        UserEmailVerification oldEmailVerification = userEmailVerificationRepository
+                .findByEmailAndConfirmationCode(
+                        user.getEmail(),
+                        userChangeEmailFinalizeRequestDto.getOldEmailConfirmationCode()
+                );
+        if (oldEmailVerification == null) {
+            throw new IllegalStateException(
+                    "Wrong confirmation code provided for old email.");
+        }
+        if (Duration
+                .between(
+                        oldEmailVerification.getCreatedAt(),
+                        LocalDateTime.now(ZoneOffset.UTC)
+                )
+                .compareTo(userRegistrationProperties.getConfirmationCodeLiveTime()) > 0) {
+            throw new IllegalStateException(
+                    "Confirmation code for old email expired.");
+        }
+
+        // Check confirmation code for new email
+        UserEmailVerification newEmailVerification = userEmailVerificationRepository
+                .findByEmailAndConfirmationCode(
+                        userChangeEmailFinalizeRequestDto.getNewEmail(),
+                        userChangeEmailFinalizeRequestDto.getNewEmailConfirmationCode());
+        if (newEmailVerification == null) {
+            throw new IllegalStateException(
+                    "Wrong confirmation code provided for new email.");
+        }
+        if (Duration
+                .between(
+                        newEmailVerification.getCreatedAt(),
+                        LocalDateTime.now(ZoneOffset.UTC)
+                )
+                .compareTo(userRegistrationProperties.getConfirmationCodeLiveTime()) > 0) {
+            throw new IllegalStateException(
+                    "Confirmation code for new email expired.");
+        }
+
+        // Update user's email
+        user.setEmail(userChangeEmailFinalizeRequestDto.getNewEmail());
+        user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+        userRepository.save(user);
+
+        // Cleanup verification records
+        userEmailVerificationRepository.deleteByEmailAndConfirmationCode(
+                oldEmail,
+                userChangeEmailFinalizeRequestDto.getOldEmailConfirmationCode()
+        );
+        userEmailVerificationRepository.deleteByEmailAndConfirmationCode(
+                userChangeEmailFinalizeRequestDto.getNewEmail(),
+                userChangeEmailFinalizeRequestDto.getNewEmailConfirmationCode()
+        );
+
+        return new UserChangeEmailFinalizeResponseDto(true);
     }
 
     private String generateConfirmationCode() {
