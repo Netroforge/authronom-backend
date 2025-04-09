@@ -1,66 +1,45 @@
 package com.github.netroforge.authronom_backend.service;
 
+import com.github.netroforge.authronom_backend.service.dto.CustomOAuth2User;
+import com.github.netroforge.authronom_backend.service.dto.CustomOidcUser;
+import com.github.netroforge.authronom_backend.service.dto.CustomUserDetails;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
-import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-
-import java.util.*;
 
 /**
  * More info:
  * https://docs.spring.io/spring-authorization-server/reference/core-model-components.html#oauth2-token-customizer
  * https://docs.spring.io/spring-authorization-server/reference/guides/how-to-userinfo.html#customize-id-token
  */
+@Slf4j
 public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
-
-    private static final Set<String> ID_TOKEN_CLAIMS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            IdTokenClaimNames.ISS,
-            IdTokenClaimNames.SUB,
-            IdTokenClaimNames.AUD,
-            IdTokenClaimNames.EXP,
-            IdTokenClaimNames.IAT,
-            IdTokenClaimNames.AUTH_TIME,
-            IdTokenClaimNames.NONCE,
-            IdTokenClaimNames.ACR,
-            IdTokenClaimNames.AMR,
-            IdTokenClaimNames.AZP,
-            IdTokenClaimNames.AT_HASH,
-            IdTokenClaimNames.C_HASH
-    )));
 
     @Override
     public void customize(JwtEncodingContext context) {
         if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-            Map<String, Object> thirdPartyClaims = extractClaims(context.getPrincipal());
-            context.getClaims().claims(existingClaims -> {
-                // Remove conflicting claims set by this authorization server
-                existingClaims.keySet().forEach(thirdPartyClaims::remove);
+            Authentication principalParent = context.getPrincipal();
+            Object principal = principalParent.getPrincipal();
 
-                // Remove standard id_token claims that could cause problems with clients
-                ID_TOKEN_CLAIMS.forEach(thirdPartyClaims::remove);
+            if (principal instanceof CustomOAuth2User customOAuth2User) {
+                context.getClaims().claims(existingClaims -> {
+                    existingClaims.put(IdTokenClaimNames.SUB, customOAuth2User.getUid());
+                });
+            } else if (principal instanceof CustomOidcUser customOidcUser) {
+                context.getClaims().claims(existingClaims -> {
+                    existingClaims.put(IdTokenClaimNames.SUB, customOidcUser.getUid());
+                });
+            } else if (principal instanceof CustomUserDetails customUserDetails) {
+                context.getClaims().claims(existingClaims -> {
+                    existingClaims.put(IdTokenClaimNames.SUB, customUserDetails.getUid());
+                });
+            }
 
-                // Add all other claims directly to id_token
-                existingClaims.putAll(thirdPartyClaims);
-            });
+            log.debug("Federated identity id token custom principal: {}", principal);
         }
-    }
-
-    private Map<String, Object> extractClaims(Authentication principal) {
-        Map<String, Object> claims;
-        if (principal.getPrincipal() instanceof OidcUser oidcUser) {
-            OidcIdToken idToken = oidcUser.getIdToken();
-            claims = idToken.getClaims();
-        } else if (principal.getPrincipal() instanceof OAuth2User oauth2User) {
-            claims = oauth2User.getAttributes();
-        } else {
-            claims = Collections.emptyMap();
-        }
-
-        return new HashMap<>(claims);
     }
 }

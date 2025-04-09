@@ -2,16 +2,19 @@ package com.github.netroforge.authronom_backend.service;
 
 import com.github.netroforge.authronom_backend.repository.UserRepository;
 import com.github.netroforge.authronom_backend.repository.entity.User;
-import com.github.netroforge.authronom_backend.service.dto.AuthorizedUser;
+import com.github.netroforge.authronom_backend.service.dto.CustomUserDetails;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsPasswordService;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Map;
 
-public class CustomUserDetailsService implements UserDetailsManager, UserDetailsPasswordService {
+@Slf4j
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -23,58 +26,12 @@ public class CustomUserDetailsService implements UserDetailsManager, UserDetails
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username);
         if (user == null) {
-            throw new UsernameNotFoundException("User with username = " + username + " not found");
+            throw new BadCredentialsException("Bad credentials");
         }
-        return new AuthorizedUser(
+        return new CustomUserDetails(
                 user.getUid(),
-                user.getEmail(),
                 user.getPassword(),
-                Collections.emptyList(),
-                Map.of(
-                        "email", user.getEmail()
-                )
+                Collections.emptyList()
         );
-    }
-
-    @Override
-    public UserDetails updatePassword(UserDetails userDetails, String newPassword) {
-        User user = userRepository.findByEmail(userDetails.getUsername());
-        if (user == null) {
-            throw new UsernameNotFoundException("User with username = " + userDetails.getUsername() + " not found");
-        }
-        return new AuthorizedUser(
-                user.getUid(),
-                user.getEmail(),
-                newPassword,
-                Collections.emptyList(),
-                Map.of(
-                        "email", user.getEmail()
-                )
-        );
-    }
-
-    @Override
-    public void createUser(UserDetails user) {
-
-    }
-
-    @Override
-    public void updateUser(UserDetails user) {
-
-    }
-
-    @Override
-    public void deleteUser(String username) {
-
-    }
-
-    @Override
-    public void changePassword(String oldPassword, String newPassword) {
-
-    }
-
-    @Override
-    public boolean userExists(String username) {
-        return false;
     }
 }

@@ -2,7 +2,6 @@ package com.github.netroforge.authronom_backend.config;
 
 import com.github.netroforge.authronom_backend.properties.CorsProperties;
 import com.github.netroforge.authronom_backend.properties.SecurityProperties;
-import com.github.netroforge.authronom_backend.repository.UserRepository;
 import com.github.netroforge.authronom_backend.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -62,7 +61,7 @@ public class SecurityConfig {
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
     ) throws Exception {
         http
-                .securityMatcher("/auth/**")
+                .securityMatcher("/user/**", "/auth/**")
                 .cors(corsConfigurerCustomizer)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(configurer ->
@@ -149,6 +148,9 @@ public class SecurityConfig {
             FormLoginAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler,
             FormLoginAuthenticationFailureHandler formLoginAuthenticationFailureHandler,
             Oauth2LoginAuthenticationSuccessHandler oauth2LoginAuthenticationSuccessHandler,
+            CustomOAuth2UserService customOAuth2UserService,
+            CustomOidcUserService customOidcUserService,
+            CustomUserDetailsService customUserDetailsService,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer,
             SecurityProperties securityProperties
     ) throws Exception {
@@ -164,6 +166,10 @@ public class SecurityConfig {
                 .oauth2Login(new Customizer<>() {
                     @Override
                     public void customize(OAuth2LoginConfigurer<HttpSecurity> httpSecurityOAuth2LoginConfigurer) {
+                        httpSecurityOAuth2LoginConfigurer.userInfoEndpoint(userInfoEndpointConfig -> {
+                            userInfoEndpointConfig.userService(customOAuth2UserService);
+                            userInfoEndpointConfig.oidcUserService(customOidcUserService);
+                        });
                         httpSecurityOAuth2LoginConfigurer.successHandler(oauth2LoginAuthenticationSuccessHandler);
                         httpSecurityOAuth2LoginConfigurer.loginPage(securityProperties.getOauth2LoginPage());
                         httpSecurityOAuth2LoginConfigurer.failureUrl(securityProperties.getOauth2LoginFailureUrl());
@@ -180,7 +186,8 @@ public class SecurityConfig {
                         httpSecurityFormLoginConfigurer.loginPage(securityProperties.getFormLoginPage());
                         httpSecurityFormLoginConfigurer.loginProcessingUrl(securityProperties.getFormLoginProcessingPath());
                     }
-                });
+                })
+                .userDetailsService(customUserDetailsService);
 
         return http.build();
     }
@@ -214,13 +221,6 @@ public class SecurityConfig {
     @Bean
     public FederatedIdentityIdTokenCustomizer federatedIdentityIdTokenCustomizer() {
         return new FederatedIdentityIdTokenCustomizer();
-    }
-
-    @Bean
-    public CustomUserDetailsService users(
-            UserRepository userRepository
-    ) {
-        return new CustomUserDetailsService(userRepository);
     }
 
     @Bean

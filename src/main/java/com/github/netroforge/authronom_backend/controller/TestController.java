@@ -1,6 +1,6 @@
 package com.github.netroforge.authronom_backend.controller;
 
-import org.springframework.security.core.Authentication;
+import com.github.netroforge.authronom_backend.utils.SecurityUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -10,7 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TestController {
 
     @GetMapping("/auth/test")
-    public Long test(Authentication authentication) {
-        return ThreadLocalRandom.current().nextLong();
+    public String test() {
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        return "user uid: '" + userUid + "', random number: '" + ThreadLocalRandom.current().nextLong() + "'";
     }
 }

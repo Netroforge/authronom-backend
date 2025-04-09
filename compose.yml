@@ -23,6 +23,25 @@ services:
     ports:
       - '6379:6379'
 
+  # Inspired by https://mailpit.axllent.org/docs/install/docker/#docker-compose-example
+  mailpit:
+    container_name: authronom-backend-mailpit
+    image: axllent/mailpit:v1.24
+    volumes:
+      - type: volume
+        source: mailpit-data
+        target: /data
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
 volumes:
   postgresql-data:
     name: authronom-backend-postgresql17-data
+  mailpit-data:
+    name: authronom-backend-mailpit-data

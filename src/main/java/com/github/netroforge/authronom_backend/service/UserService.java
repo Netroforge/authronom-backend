@@ -1,11 +1,11 @@
 package com.github.netroforge.authronom_backend.service;
 
 import com.fasterxml.uuid.Generators;
+import com.github.netroforge.authronom_backend.controller.dto.UserInfoResponseDto;
 import com.github.netroforge.authronom_backend.properties.UserRegistrationProperties;
 import com.github.netroforge.authronom_backend.repository.UserEmailVerificationRepository;
 import com.github.netroforge.authronom_backend.repository.UserRepository;
 import com.github.netroforge.authronom_backend.repository.entity.*;
-import com.github.netroforge.authronom_backend.service.dto.AuthorizedUser;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTask;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTaskData;
 import com.github.netroforge.authronom_backend.utils.SecurityUtils;
@@ -44,6 +44,16 @@ public class UserService {
         this.dbschedulerService = dbschedulerService;
         this.userEmailVerificationRepository = userEmailVerificationRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public UserInfoResponseDto getUserInfo() {
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        User user = userRepository.findByUid(userUid);
+        if (user == null) {
+            log.error("User not found, this is not expected");
+            throw new IllegalStateException("Something goes wrong");
+        }
+        return new UserInfoResponseDto(user.getUid(), user.getEmail());
     }
 
     public UserRegistrationStartResponseDto startUserRegistration(
@@ -118,8 +128,8 @@ public class UserService {
     }
 
     public UserChangePasswordStartResponseDto startUserChangePassword() {
-        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
-        User user = userRepository.findByUid(authorizedUser.getUid());
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        User user = userRepository.findByUid(userUid);
         if (user == null) {
             throw new IllegalStateException("Internal server error.");
         }
@@ -141,8 +151,8 @@ public class UserService {
     public UserChangePasswordFinalizeResponseDto finalizeUserChangePassword(
             UserChangePasswordFinalizeRequestDto userChangePasswordFinalizeRequestDto
     ) {
-        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
-        User user = userRepository.findByUid(authorizedUser.getUid());
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        User user = userRepository.findByUid(userUid);
         if (user == null) {
             throw new IllegalStateException("Internal server error.");
         }
@@ -189,8 +199,8 @@ public class UserService {
     public UserChangeEmailStartResponseDto startUserChangeEmail(
             UserChangeEmailStartRequestDto userChangeEmailStartRequestDto
     ) {
-        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
-        User user = userRepository.findByUid(authorizedUser.getUid());
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        User user = userRepository.findByUid(userUid);
         if (user == null) {
             throw new IllegalStateException("Internal server error.");
         }
@@ -230,8 +240,8 @@ public class UserService {
     public UserChangeEmailFinalizeResponseDto finalizeUserChangeEmail(
             UserChangeEmailFinalizeRequestDto userChangeEmailFinalizeRequestDto
     ) {
-        AuthorizedUser authorizedUser = SecurityUtils.getAuthorizedUser();
-        User user = userRepository.findByUid(authorizedUser.getUid());
+        String userUid = SecurityUtils.getAuthorizedUserUid();
+        User user = userRepository.findByUid(userUid);
         if (user == null) {
             throw new IllegalStateException("Internal server error.");
         }
