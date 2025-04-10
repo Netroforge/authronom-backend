@@ -79,7 +79,7 @@ email:
 
 user:
   registration:
-    confirmation-email-from: ${AUTHRONOM_USER_REGISTRATION_CONFIRMATION_EMAIL_FROM}
+    confirmation-email-from: "authronom.dev@gmail.com"
     confirmation-email-from-name: "Authronom (dev)"
     confirmation-email-subject: "Email confirmation"
 
