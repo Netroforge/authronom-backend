@@ -19,7 +19,7 @@ services:
   authronom-backend-redis:
     container_name: authronom-backend-redis
     image: redis:7.4.2
-    command: redis-server --save 20 1 --loglevel warning --requirepass user
+    command: redis-server --save 20 1 --loglevel warning --requirepass redis
     ports:
       - '6379:6379'
 

@@ -6,6 +6,20 @@ logging:
     org.springframework.security: DEBUG
 
 spring:
+  data:
+    redis:
+      jedis:
+        pool:
+          enabled: true
+      host: localhost
+      port: 6379
+      username:
+      password: redis
+      database: 0
+  session:
+    redis:
+      namespace: "authronom-dev:session"
+
   security:
     oauth2:
       resourceserver:

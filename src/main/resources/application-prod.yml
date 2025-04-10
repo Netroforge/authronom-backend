@@ -1,0 +1,14 @@
+spring:
+  data:
+    redis:
+      jedis:
+        pool:
+          enabled: true
+      host: ${AUTHRONOM_DATA_REDIS_HOST}
+      port: ${AUTHRONOM_DATA_REDIS_PORT}
+      username: ${AUTHRONOM_DATA_REDIS_USERNAME}
+      password: ${AUTHRONOM_DATA_REDIS_PASSWORD}
+      database: ${AUTHRONOM_DATA_REDIS_DATABASE}
+  session:
+    redis:
+      namespace: "authronom-prod:session"

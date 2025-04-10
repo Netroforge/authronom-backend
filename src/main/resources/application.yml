@@ -9,6 +9,8 @@ logging:
 spring:
   application:
     name: ${AUTHRONOM_SERVICE_NAME:authronom-backend}
+  session:
+    timeout: ${AUTHRONOM_SESSION_TIMEOUT:3h}
   liquibase:
     enabled: false
     change-log: classpath:database/db.changelog.yaml

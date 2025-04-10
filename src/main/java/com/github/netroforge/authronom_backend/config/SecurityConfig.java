@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +27,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.session.data.redis.RedisIndexedSessionRepository;
 import org.springframework.web.cors.CorsConfiguration;
 
 @EnableWebSecurity
@@ -145,6 +148,7 @@ public class SecurityConfig {
     @Order(5)
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
+            RedisOperations<String, Object> redisOperations,
             FormLoginAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler,
             FormLoginAuthenticationFailureHandler formLoginAuthenticationFailureHandler,
             Oauth2LoginAuthenticationSuccessHandler oauth2LoginAuthenticationSuccessHandler,
@@ -155,6 +159,13 @@ public class SecurityConfig {
             SecurityProperties securityProperties
     ) throws Exception {
         http
+                .sessionManagement(session ->
+                        session
+                                // Optional: Set session timeout
+                                .maximumSessions(1)
+                                // Optional: Prevent new logins if max sessions reached
+                                .maxSessionsPreventsLogin(true)
+                )
                 .cors(corsConfigurerCustomizer)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize) ->
