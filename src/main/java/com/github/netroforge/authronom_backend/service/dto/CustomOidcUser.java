@@ -5,10 +5,11 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
-public class CustomOidcUser implements OidcUser {
+public class CustomOidcUser implements OidcUser, Serializable {
     private final String uid;
 
     private final Collection<? extends GrantedAuthority> authorities;

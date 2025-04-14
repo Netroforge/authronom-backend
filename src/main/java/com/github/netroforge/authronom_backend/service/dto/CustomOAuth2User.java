@@ -1,12 +1,15 @@
 package com.github.netroforge.authronom_backend.service.dto;
 
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
-public class CustomOAuth2User implements OAuth2User {
+@Data
+public class CustomOAuth2User implements OAuth2User, Serializable {
     private final String uid;
 
     private final Collection<? extends GrantedAuthority> authorities;

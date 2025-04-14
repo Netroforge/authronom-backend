@@ -1,7 +1,7 @@
 package com.github.netroforge.authronom_backend.controller;
 
 import com.github.netroforge.authronom_backend.controller.dto.ApiErrorResponseDto;
-import com.github.netroforge.authronom_backend.repository.entity.*;
+import com.github.netroforge.authronom_backend.repository.db.entity.*;
 import com.github.netroforge.authronom_backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
