@@ -1,18 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: create-drop
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    default-schema: PUBLIC
-    database-change-log-table: DATABASECHANGELOG
-    database-change-log-lock-table: DATABASECHANGELOGLOCK
   data:
     redis:
       jedis:

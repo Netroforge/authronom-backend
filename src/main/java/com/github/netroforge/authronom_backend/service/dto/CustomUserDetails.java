@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.io.Serializable;
 import java.util.Collection;
 
-public class CustomUserDetails implements UserDetails, Serializable {
+public class CustomUserDetails implements AuthorizedUser, UserDetails, Serializable {
     private final String uid;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -21,6 +21,7 @@ public class CustomUserDetails implements UserDetails, Serializable {
         this.authorities = authorities;
     }
 
+    @Override
     public String getUid() {
         return uid;
     }

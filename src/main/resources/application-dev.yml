@@ -18,7 +18,7 @@ spring:
       database: 0
   session:
     redis:
-      namespace: "authronom-dev:session"
+      namespace: "authronom-dev"
 
   security:
     oauth2:

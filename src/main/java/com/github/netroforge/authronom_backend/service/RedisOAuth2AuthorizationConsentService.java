@@ -1,43 +1,60 @@
 package com.github.netroforge.authronom_backend.service;
 
-import com.github.netroforge.authronom_backend.repository.redis.OAuth2UserConsentRepository;
-import com.github.netroforge.authronom_backend.repository.redis.entity.OAuth2UserConsent;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.util.Assert;
 
-public class RedisOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
+import java.time.Duration;
+import java.util.Objects;
 
-	private final OAuth2UserConsentRepository userConsentRepository;
+public final class RedisOAuth2AuthorizationConsentService implements OAuth2AuthorizationConsentService {
 
-	public RedisOAuth2AuthorizationConsentService(OAuth2UserConsentRepository userConsentRepository) {
-		Assert.notNull(userConsentRepository, "userConsentRepository cannot be null");
-		this.userConsentRepository = userConsentRepository;
-	}
+    private final static String KEY_PREFIX = "oauth2_authorization_consent:";
 
-	@Override
-	public void save(OAuth2AuthorizationConsent authorizationConsent) {
-		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
-		OAuth2UserConsent oauth2UserConsent = ModelMapper.convertOAuth2UserConsent(authorizationConsent);
-		this.userConsentRepository.save(oauth2UserConsent);
-	}
+    private final RedisTemplate<String, OAuth2AuthorizationConsent> redisTemplate;
+    private final ValueOperations<String, OAuth2AuthorizationConsent> authorizationConsents;
+    private final Duration ttl;
 
-	@Override
-	public void remove(OAuth2AuthorizationConsent authorizationConsent) {
-		Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
-		this.userConsentRepository.deleteByRegisteredClientIdAndPrincipalName(
-				authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
-	}
+    public RedisOAuth2AuthorizationConsentService(
+            RedisTemplate<String, OAuth2AuthorizationConsent> redisTemplate,
+            Duration ttl
+    ) {
+        this.redisTemplate = redisTemplate;
+        this.authorizationConsents = redisTemplate.opsForValue();
+        this.ttl = ttl;
+    }
 
-	@Nullable
-	@Override
-	public OAuth2AuthorizationConsent findById(String registeredClientId, String principalName) {
-		Assert.hasText(registeredClientId, "registeredClientId cannot be empty");
-		Assert.hasText(principalName, "principalName cannot be empty");
-		OAuth2UserConsent oauth2UserConsent = this.userConsentRepository
-			.findByRegisteredClientIdAndPrincipalName(registeredClientId, principalName);
-		return oauth2UserConsent != null ? ModelMapper.convertOAuth2AuthorizationConsent(oauth2UserConsent) : null;
-	}
+    private static String getId(String registeredClientId, String principalName) {
+        return String.valueOf(Objects.hash(registeredClientId, principalName));
+    }
 
+    private static String getId(OAuth2AuthorizationConsent authorizationConsent) {
+        return getId(authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
+    }
+
+    @Override
+    public void save(OAuth2AuthorizationConsent authorizationConsent) {
+        Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
+        String id = getId(authorizationConsent);
+        this.authorizationConsents.set(KEY_PREFIX + id, authorizationConsent, ttl);
+    }
+
+    @Override
+    public void remove(OAuth2AuthorizationConsent authorizationConsent) {
+        Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
+        String id = getId(authorizationConsent);
+        this.redisTemplate.delete(KEY_PREFIX + id);
+    }
+
+    @Override
+    @Nullable
+    public OAuth2AuthorizationConsent findById(String registeredClientId, String principalName) {
+        Assert.hasText(registeredClientId, "registeredClientId cannot be empty");
+        Assert.hasText(principalName, "principalName cannot be empty");
+        String id = getId(registeredClientId, principalName);
+        return this.authorizationConsents.get(id);
+    }
 }

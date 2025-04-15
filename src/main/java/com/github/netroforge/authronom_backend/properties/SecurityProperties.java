@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 @Getter
 @Setter
 @Component
@@ -22,4 +24,8 @@ public class SecurityProperties {
     private String oauth2LoginPage;
     private String oauth2LoginSuccessUrl;
     private String oauth2LoginFailureUrl;
+
+    // General
+    private Duration authorizationTtl;
+    private Duration authorizationConsentTtl;
 }

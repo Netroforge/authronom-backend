@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
-public class CustomOidcUser implements OidcUser, Serializable {
+public class CustomOidcUser implements AuthorizedUser, OidcUser, Serializable {
     private final String uid;
 
     private final Collection<? extends GrantedAuthority> authorities;
@@ -34,6 +34,7 @@ public class CustomOidcUser implements OidcUser, Serializable {
         this.oidcUserInfo = oidcUserInfo;
     }
 
+    @Override
     public String getUid() {
         return uid;
     }

@@ -3,11 +3,12 @@ package com.github.netroforge.authronom_backend.config;
 import com.github.netroforge.authronom_backend.properties.CorsProperties;
 import com.github.netroforge.authronom_backend.properties.SecurityProperties;
 import com.github.netroforge.authronom_backend.service.*;
+import com.github.netroforge.authronom_backend.service.dto.AuthorizationInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
@@ -16,18 +17,20 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
-import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-import org.springframework.session.data.redis.RedisIndexedSessionRepository;
 import org.springframework.web.cors.CorsConfiguration;
 
 @EnableWebSecurity
@@ -148,7 +151,6 @@ public class SecurityConfig {
     @Order(5)
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
-            RedisOperations<String, Object> redisOperations,
             FormLoginAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler,
             FormLoginAuthenticationFailureHandler formLoginAuthenticationFailureHandler,
             Oauth2LoginAuthenticationSuccessHandler oauth2LoginAuthenticationSuccessHandler,
@@ -222,6 +224,30 @@ public class SecurityConfig {
             }
             return corsConfiguration;
         });
+    }
+
+    @Bean
+    public OAuth2AuthorizationConsentService oAuth2AuthorizationConsentService(
+            RedisTemplate<String, OAuth2AuthorizationConsent> redisTemplate,
+            SecurityProperties securityProperties
+    ) {
+        return new RedisOAuth2AuthorizationConsentService(
+                redisTemplate,
+                securityProperties.getAuthorizationTtl()
+        );
+    }
+
+    @Bean
+    public OAuth2AuthorizationService oAuth2AuthorizationService(
+            RedisTemplate<String, OAuth2Authorization> redisTemplate,
+            RedisTemplate<String, AuthorizationInfo> redisTemplateAuthInfo,
+            SecurityProperties securityProperties
+    ) {
+        return new RedisOAuth2AuthorizationService(
+                redisTemplate,
+                redisTemplateAuthInfo,
+                securityProperties.getAuthorizationTtl()
+        );
     }
 
     /**
