@@ -29,41 +29,47 @@ public class CustomOidcUserService extends OidcUserService {
         OidcUser oidcUser = super.loadUser(userRequest);
 
         if ("google".equals(userRequest.getClientRegistration().getRegistrationId())) {
-            String googleId = oidcUser.getAttribute("sub");
-            User user = userRepository.findByGoogleId(googleId);
-            if (user == null) {
-                log.debug(
-                        "Saving first time user: name={}, claims={}, authorities={}",
-                        oidcUser.getName(),
-                        oidcUser.getAttributes(),
-                        oidcUser.getAuthorities()
-                );
-                User userByEmail = userRepository.findByEmail(oidcUser.getAttribute("email"));
-                if (userByEmail != null) {
-                    userByEmail.setGoogleId(googleId);
-                    userByEmail.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user = userRepository.save(userByEmail);
-                } else {
-                    user = new User();
-                    user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
-                    user.setEmail(oidcUser.getAttribute("email"));
-                    user.setGoogleId(googleId);
-                    user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user.setNew(true);
-                    user = userRepository.save(user);
-                }
-            }
-
-            return new CustomOidcUser(
-                    user.getUid(),
-                    oidcUser.getAuthorities(),
-                    oidcUser.getAttributes(),
-                    oidcUser.getIdToken(),
-                    oidcUser.getUserInfo()
-            );
+            return getCustomOidcUserFromGoogle(oidcUser);
         } else {
             throw new IllegalStateException("Unsupported registration id: " + userRequest.getClientRegistration().getRegistrationId());
         }
     }
+
+    private CustomOidcUser getCustomOidcUserFromGoogle(OidcUser oidcUser) {
+        String googleId = oidcUser.getAttribute("sub");
+        User user = userRepository.findByGoogleId(googleId);
+        if (user == null) {
+            log.debug(
+                    "Saving first time user: name={}, claims={}, authorities={}",
+                    oidcUser.getName(),
+                    oidcUser.getAttributes(),
+                    oidcUser.getAuthorities()
+            );
+            User userByEmail = userRepository.findByEmail(oidcUser.getAttribute("email"));
+            if (userByEmail != null) {
+                userByEmail.setGoogleId(googleId);
+                userByEmail.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user = userRepository.save(userByEmail);
+            } else {
+                user = new User();
+                user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
+                user.setEmail(oidcUser.getAttribute("email"));
+                user.setGoogleId(googleId);
+                user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user.setNew(true);
+                user = userRepository.save(user);
+            }
+        }
+
+        return new CustomOidcUser(
+                user.getUid(),
+                oidcUser.getAuthorities(),
+                oidcUser.getAttributes(),
+                oidcUser.getIdToken(),
+                oidcUser.getUserInfo()
+        );
+    }
+
+
 }
