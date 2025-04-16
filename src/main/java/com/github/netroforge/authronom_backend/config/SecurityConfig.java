@@ -1,7 +1,9 @@
 package com.github.netroforge.authronom_backend.config;
 
 import com.github.netroforge.authronom_backend.properties.CorsProperties;
+import com.github.netroforge.authronom_backend.properties.DbSchedulerUiSecurityProperties;
 import com.github.netroforge.authronom_backend.properties.SecurityProperties;
+import com.github.netroforge.authronom_backend.properties.SpringdocSecurityProperties;
 import com.github.netroforge.authronom_backend.service.*;
 import com.github.netroforge.authronom_backend.service.dto.AuthorizationInfo;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,9 @@ import org.springframework.security.config.annotation.web.configurers.CorsConfig
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
@@ -27,16 +32,24 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.session.web.http.CookieHttpSessionIdResolver;
+import org.springframework.session.web.http.HttpSessionIdResolver;
 import org.springframework.web.cors.CorsConfiguration;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
+
+    @Bean
+    public HttpSessionIdResolver httpSessionIdResolver() {
+        return new CookieHttpSessionIdResolver();
+    }
 
     @Bean
     @Order(1)
@@ -52,7 +65,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .anonymous(AbstractHttpConfigurer::disable)
                 .sessionManagement((customizer) ->
-                        customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        customizer.sessionCreationPolicy(SessionCreationPolicy.NEVER)
                 )
                 .authorizeHttpRequests(authorize ->
                         authorize.anyRequest().permitAll()
@@ -62,6 +75,59 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    public SecurityFilterChain swaggerSecurityFilterChain(
+            HttpSecurity http,
+            UserDetailsService swaggerUsers,
+            Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
+    ) throws Exception {
+        return http
+                .securityMatcher(
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/error"
+                )
+                .cors(corsConfigurerCustomizer)
+                .httpBasic(Customizer.withDefaults())
+                .userDetailsService(swaggerUsers)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .anonymous(AbstractHttpConfigurer::disable)
+                .sessionManagement((customizer) ->
+                        customizer.sessionCreationPolicy(SessionCreationPolicy.NEVER)
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().authenticated()
+                )
+                .build();
+    }
+
+    @Bean
+    @Order(3)
+    public SecurityFilterChain dbSchedulerUiSecurityFilterChain(
+            HttpSecurity http,
+            UserDetailsService dbSchedulerUiUsers,
+            Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
+    ) throws Exception {
+        return http
+                .securityMatcher("/db-scheduler/**", "/db-scheduler-api/**")
+                .cors(corsConfigurerCustomizer)
+                .httpBasic(Customizer.withDefaults())
+                .userDetailsService(dbSchedulerUiUsers)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .anonymous(AbstractHttpConfigurer::disable)
+                .sessionManagement((customizer) ->
+                        customizer.sessionCreationPolicy(SessionCreationPolicy.NEVER)
+                )
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().authenticated()
+                )
+                .build();
+    }
+
+    @Bean
+    @Order(4)
     public SecurityFilterChain authResourceServerSecurityFilterChain(
             HttpSecurity http,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
@@ -94,7 +160,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(3)
+    @Order(5)
     public SecurityFilterChain registrationSecurityFilterChain(
             HttpSecurity http,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer
@@ -116,7 +182,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(4)
+    @Order(6)
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             Customizer<CorsConfigurer<HttpSecurity>> corsConfigurerCustomizer,
@@ -148,7 +214,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(5)
+    @Order(7)
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             FormLoginAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler,
@@ -161,6 +227,20 @@ public class SecurityConfig {
             SecurityProperties securityProperties
     ) throws Exception {
         http
+//                .securityMatcher(
+//                        new AndRequestMatcher(
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/status")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/login")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/public/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/db-scheduler/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/db-scheduler-api/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/swagger-ui/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/v3/api-docs/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/admin/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/auth/**")),
+//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/error"))
+//                        )
+//                )
                 .sessionManagement(session ->
                         session
                                 // Optional: Set session timeout
@@ -265,5 +345,25 @@ public class SecurityConfig {
             SecurityProperties securityProperties
     ) {
         return new BCryptPasswordEncoder(securityProperties.getBcryptPasswordEncoderStrength());
+    }
+
+    @Bean
+    public UserDetailsService swaggerUsers(SpringdocSecurityProperties springdocSecurityProperties) {
+        UserDetails admin = User.builder()
+                .username(springdocSecurityProperties.getAdminUsername())
+                .password(springdocSecurityProperties.getAdminPassword())
+                .roles("USER", "ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(admin);
+    }
+
+    @Bean
+    public UserDetailsService dbSchedulerUiUsers(DbSchedulerUiSecurityProperties dbSchedulerUiSecurityProperties) {
+        UserDetails admin = User.builder()
+                .username(dbSchedulerUiSecurityProperties.getAdminUsername())
+                .password(dbSchedulerUiSecurityProperties.getAdminPassword())
+                .roles("USER", "ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(admin);
     }
 }

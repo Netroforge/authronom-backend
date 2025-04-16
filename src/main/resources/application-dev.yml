@@ -84,6 +84,16 @@ cors:
   allow-credentials: true
   max-age: 3600
 
+springdoc:
+  security:
+    admin-username: admin
+    admin-password: '$2a$12$6vjBk9b2MZPRRZ6Izf1pXOWwX0L047nx.uVU1dBzdWCsC03hv8Lei'
+
+db-scheduler-ui:
+  security:
+    admin-username: admin
+    admin-password: '$2a$12$E8tTlRkVQ7a9mb68qqJMx.ghzIrMMD.tjbv65U0EVfGD5ehm73xIS'
+
 email:
   server: localhost
   port: 1025

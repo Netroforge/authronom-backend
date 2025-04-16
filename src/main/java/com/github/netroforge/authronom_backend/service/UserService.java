@@ -10,6 +10,8 @@ import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmatio
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTaskData;
 import com.github.netroforge.authronom_backend.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -110,14 +112,23 @@ public class UserService {
         }
 
         // Create a new user in the database
-        User user = new User();
-        user.setNew(true);
-        user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
-        user.setEmail(userRegistrationFinalizeRequestDto.getEmail());
-        user.setPassword(passwordEncoder.encode(userRegistrationFinalizeRequestDto.getPassword()));
-        user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-        user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
-        userRepository.save(user);
+        try {
+            User user = new User();
+            user.setNew(true);
+            user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
+            user.setEmail(userRegistrationFinalizeRequestDto.getEmail());
+            user.setPassword(passwordEncoder.encode(userRegistrationFinalizeRequestDto.getPassword()));
+            user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            userRepository.save(user);
+        } catch (DbActionExecutionException dbActionExecutionException) {
+            if (dbActionExecutionException.getCause() instanceof DuplicateKeyException) {
+                throw new IllegalStateException("Email already in use.");
+            } else {
+                log.error("Error", dbActionExecutionException);
+                throw new IllegalStateException("Something goes wrong.");
+            }
+        }
 
         userEmailVerificationRepository.deleteByEmailAndConfirmationCode(
                 userRegistrationFinalizeRequestDto.getEmail(),

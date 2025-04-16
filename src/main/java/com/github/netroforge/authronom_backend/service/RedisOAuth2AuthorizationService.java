@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -147,8 +148,8 @@ public final class RedisOAuth2AuthorizationService implements OAuth2Authorizatio
 
         AuthorizationInfo authorizationInfo = new AuthorizationInfo(
                 authorization.getRegisteredClientId(),
-                lastAuthInfo != null ? lastAuthInfo.getStartDate() : LocalDateTime.now(),
-                LocalDateTime.now(),
+                lastAuthInfo != null ? lastAuthInfo.getStartDate() : LocalDateTime.now(ZoneOffset.UTC),
+                LocalDateTime.now(ZoneOffset.UTC),
                 authorization.getAuthorizedScopes(),
                 authorization.getAuthorizationGrantType(),
                 authorization.getId(),

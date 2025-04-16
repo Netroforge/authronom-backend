@@ -11,6 +11,8 @@ spring:
     name: ${AUTHRONOM_SERVICE_NAME:authronom-backend}
   session:
     timeout: ${AUTHRONOM_SESSION_TIMEOUT:3h}
+    redis:
+      flush-mode: on_save
   datasource:
     primary:
       url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5432}/${AUTHRONOM_PG_DB:dev_authronom_backend}
@@ -32,6 +34,9 @@ spring:
 springdoc:
   show-actuator: true
   show-oauth2-endpoints: true
+  security:
+    admin-username: ${SPRINGDOC_SECURITY_ADMIN_USERNAME}
+    admin-password: ${SPRINGDOC_SECURITY_ADMIN_PASSWORD}
 
 db-scheduler:
   polling-interval: 10s
@@ -44,6 +49,9 @@ db-scheduler:
 db-scheduler-ui:
   history: true
   log-limit: 1000
+  security:
+    admin-username: ${DB_SCHEDULER_UI_SECURITY_ADMIN_USERNAME}
+    admin-password: ${DB_SCHEDULER_UI_SECURITY_ADMIN_PASSWORD}
 
 email:
   server: ${AUTHRONOM_EMAIL_SERVER}
