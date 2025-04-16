@@ -1,8 +1,8 @@
 package com.github.netroforge.authronom_backend.service;
 
 import com.fasterxml.uuid.Generators;
-import com.github.netroforge.authronom_backend.repository.UserRepository;
-import com.github.netroforge.authronom_backend.repository.entity.User;
+import com.github.netroforge.authronom_backend.repository.db.UserRepository;
+import com.github.netroforge.authronom_backend.repository.db.entity.User;
 import com.github.netroforge.authronom_backend.service.dto.CustomOAuth2User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -29,39 +29,43 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         if ("google".equals(userRequest.getClientRegistration().getRegistrationId())) {
-            String googleId = oAuth2User.getAttribute("sub");
-            User user = userRepository.findByGoogleId(googleId);
-            if (user == null) {
-                log.debug(
-                        "Saving first time user: name={}, claims={}, authorities={}",
-                        oAuth2User.getName(),
-                        oAuth2User.getAttributes(),
-                        oAuth2User.getAuthorities()
-                );
-                User userByEmail = userRepository.findByEmail(oAuth2User.getAttribute("email"));
-                if (userByEmail != null) {
-                    userByEmail.setGoogleId(googleId);
-                    userByEmail.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user = userRepository.save(userByEmail);
-                } else {
-                    user = new User();
-                    user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
-                    user.setEmail(oAuth2User.getAttribute("email"));
-                    user.setGoogleId(googleId);
-                    user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    user.setNew(true);
-                    user = userRepository.save(user);
-                }
-            }
-
-            return new CustomOAuth2User(
-                    user.getUid(),
-                    oAuth2User.getAuthorities(),
-                    oAuth2User.getAttributes()
-            );
+            return getCustomOAuth2UserFromGoogle(oAuth2User);
         } else {
             throw new IllegalStateException("Unsupported registration id: " + userRequest.getClientRegistration().getRegistrationId());
         }
+    }
+
+    private CustomOAuth2User getCustomOAuth2UserFromGoogle(OAuth2User oAuth2User) {
+        String googleId = oAuth2User.getAttribute("sub");
+        User user = userRepository.findByGoogleId(googleId);
+        if (user == null) {
+            log.debug(
+                    "Saving first time user: name={}, claims={}, authorities={}",
+                    oAuth2User.getName(),
+                    oAuth2User.getAttributes(),
+                    oAuth2User.getAuthorities()
+            );
+            User userByEmail = userRepository.findByEmail(oAuth2User.getAttribute("email"));
+            if (userByEmail != null) {
+                userByEmail.setGoogleId(googleId);
+                userByEmail.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user = userRepository.save(userByEmail);
+            } else {
+                user = new User();
+                user.setUid(Generators.timeBasedEpochGenerator().generate().toString());
+                user.setEmail(oAuth2User.getAttribute("email"));
+                user.setGoogleId(googleId);
+                user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                user.setNew(true);
+                user = userRepository.save(user);
+            }
+        }
+
+        return new CustomOAuth2User(
+                user.getUid(),
+                oAuth2User.getAuthorities(),
+                oAuth2User.getAttributes()
+        );
     }
 }

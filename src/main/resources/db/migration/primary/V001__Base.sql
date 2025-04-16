@@ -1,7 +1,3 @@
---liquibase formatted sql
---changeset Yevhen Tienkaiev:20250326
---comment: Base
-
 -- From https://github.com/kagkarlsson/db-scheduler/blob/master/db-scheduler/src/test/resources/postgresql_tables.sql
 create table scheduled_tasks (
     task_name TEXT NOT NULL,

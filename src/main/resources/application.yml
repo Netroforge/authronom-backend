@@ -11,10 +11,8 @@ spring:
     name: ${AUTHRONOM_SERVICE_NAME:authronom-backend}
   session:
     timeout: ${AUTHRONOM_SESSION_TIMEOUT:3h}
-  liquibase:
-    enabled: false
-    change-log: classpath:database/db.changelog.yaml
-    contexts: prod, dev
+    redis:
+      flush-mode: on_save
   datasource:
     primary:
       url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5432}/${AUTHRONOM_PG_DB:dev_authronom_backend}
@@ -23,13 +21,22 @@ spring:
       driver-class-name: "org.postgresql.Driver"
       hikari:
         schema: dev_authronom_backend
-      liquibase:
-        change-log: classpath:/db/changelog/db.changelog-primary.yaml
-        default-schema: dev_authronom_backend
+      flyway:
+        enabled: true
+        locations: classpath:db/migration/primary
+        schemas: ${spring.datasource.primary.hikari.schema}
+        default-schema: ${spring.datasource.primary.hikari.schema}
+        baseline-on-migrate: true
+#      liquibase:
+#        change-log: classpath:/db/changelog/db.changelog-primary.yaml
+#        default-schema: dev_authronom_backend
 
 springdoc:
   show-actuator: true
   show-oauth2-endpoints: true
+  security:
+    admin-username: ${SPRINGDOC_SECURITY_ADMIN_USERNAME}
+    admin-password: ${SPRINGDOC_SECURITY_ADMIN_PASSWORD}
 
 db-scheduler:
   polling-interval: 10s
@@ -42,6 +49,9 @@ db-scheduler:
 db-scheduler-ui:
   history: true
   log-limit: 1000
+  security:
+    admin-username: ${DB_SCHEDULER_UI_SECURITY_ADMIN_USERNAME}
+    admin-password: ${DB_SCHEDULER_UI_SECURITY_ADMIN_PASSWORD}
 
 email:
   server: ${AUTHRONOM_EMAIL_SERVER}
@@ -61,3 +71,5 @@ user:
 
 security:
   bcrypt-password-encoder-strength: 12
+  authorization-ttl: 10800000ms
+  authorization-consent-ttl: 10800000ms

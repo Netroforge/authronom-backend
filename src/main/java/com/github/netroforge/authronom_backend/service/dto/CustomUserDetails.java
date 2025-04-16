@@ -3,9 +3,10 @@ package com.github.netroforge.authronom_backend.service.dto;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serializable;
 import java.util.Collection;
 
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements AuthorizedUser, UserDetails, Serializable {
     private final String uid;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -20,6 +21,7 @@ public class CustomUserDetails implements UserDetails {
         this.authorities = authorities;
     }
 
+    @Override
     public String getUid() {
         return uid;
     }

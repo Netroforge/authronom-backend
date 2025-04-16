@@ -1,6 +1,6 @@
-package com.github.netroforge.authronom_backend.repository;
+package com.github.netroforge.authronom_backend.repository.db;
 
-import com.github.netroforge.authronom_backend.repository.entity.UserEmailVerification;
+import com.github.netroforge.authronom_backend.repository.db.entity.UserEmailVerification;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
