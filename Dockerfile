@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/maven:3.9.9-amazoncorretto-24-al2024 AS build
+FROM public.ecr.aws/docker/library/maven:3.9.9-amazoncorretto-23-al2023 AS build
 
 WORKDIR /code
 
@@ -26,7 +26,7 @@ RUN yum install -y git
 ENTRYPOINT []
 CMD []
 
-FROM public.ecr.aws/amazoncorretto/amazoncorretto:24.0.1-al2024 AS application
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:23-al2023 AS application
 
 WORKDIR /authronom-backend
 
