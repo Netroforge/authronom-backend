@@ -1,0 +1,28 @@
+include:
+  - compose.yml
+services:
+  authronom-backend:
+    container_name: authronom-backend
+    build:
+      context: .
+      target: application
+    depends_on:
+      authronom-backend-postgres:
+        condition: service_healthy
+      authronom-backend-redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    ports:
+      - '8080:8080'
+    environment:
+      SPRING_DATASOURCE_PRIMARY_URL: "jdbc:postgresql://authronom-backend-postgres:5432/authronom-backend"
+      SPRING_DATASOURCE_PRIMARY_USERNAME: "postgres"
+      SPRING_DATASOURCE_PRIMARY_PASSWORD: "postgres"
+      SPRING_DATA_REDIS_HOST: "authronom-backend-redis"
+      SPRING_DATA_REDIS_PASSWORD: "redis"
+      AUTHRONOM_EMAIL_SERVER: "authronom-backend-mailpit"
+      AUTHRONOM_EMAIL_PORT: 1025
+      AUTHRONOM_EMAIL_SSL: false
+      AUTHRONOM_EMAIL_USERNAME: smtp4dev
+      AUTHRONOM_EMAIL_PASSWORD: smtp4dev

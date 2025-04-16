@@ -94,13 +94,6 @@ db-scheduler-ui:
     admin-username: admin
     admin-password: '$2a$12$E8tTlRkVQ7a9mb68qqJMx.ghzIrMMD.tjbv65U0EVfGD5ehm73xIS'
 
-email:
-  server: localhost
-  port: 1025
-  ssl: false
-  username: smtp4dev
-  password: smtp4dev
-
 user:
   registration:
     confirmation-email-from: "authronom.dev@gmail.com"
