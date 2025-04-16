@@ -14,6 +14,9 @@ RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests --also-mak
 
 FROM build AS tests
 
+ENV SPRING_DATASOURCE_PRIMARY_URL=jdbc:postgresql://authronom-backend-postgres:5432/test_authronom_backend
+ENV SPRING_DATA_REDIS_HOST=authronom-backend-redis
+
 RUN mvn test --batch-mode
 
 FROM public.ecr.aws/docker/library/maven:3.9.9-amazoncorretto-23-al2023 AS development
