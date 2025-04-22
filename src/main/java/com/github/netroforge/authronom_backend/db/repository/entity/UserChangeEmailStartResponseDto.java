@@ -1,4 +1,4 @@
-package com.github.netroforge.authronom_backend.db.repository.primary.entity;
+package com.github.netroforge.authronom_backend.db.repository.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

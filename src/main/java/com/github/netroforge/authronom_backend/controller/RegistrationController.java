@@ -1,10 +1,10 @@
 package com.github.netroforge.authronom_backend.controller;
 
 import com.github.netroforge.authronom_backend.controller.dto.ApiErrorResponseDto;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.UserRegistrationFinalizeRequestDto;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.UserRegistrationFinalizeResponseDto;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.UserRegistrationStartRequestDto;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.UserRegistrationStartResponseDto;
+import com.github.netroforge.authronom_backend.db.repository.entity.UserRegistrationFinalizeRequestDto;
+import com.github.netroforge.authronom_backend.db.repository.entity.UserRegistrationFinalizeResponseDto;
+import com.github.netroforge.authronom_backend.db.repository.entity.UserRegistrationStartRequestDto;
+import com.github.netroforge.authronom_backend.db.repository.entity.UserRegistrationStartResponseDto;
 import com.github.netroforge.authronom_backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;

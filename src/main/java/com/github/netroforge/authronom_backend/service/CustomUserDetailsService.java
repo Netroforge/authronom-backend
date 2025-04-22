@@ -1,7 +1,7 @@
 package com.github.netroforge.authronom_backend.service;
 
-import com.github.netroforge.authronom_backend.db.repository.primary.UserRepository;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.User;
+import com.github.netroforge.authronom_backend.db.repository.UserRepository;
+import com.github.netroforge.authronom_backend.db.repository.entity.User;
 import com.github.netroforge.authronom_backend.service.dto.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;

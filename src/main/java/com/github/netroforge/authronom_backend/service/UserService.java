@@ -2,10 +2,10 @@ package com.github.netroforge.authronom_backend.service;
 
 import com.fasterxml.uuid.Generators;
 import com.github.netroforge.authronom_backend.controller.dto.UserInfoResponseDto;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.*;
+import com.github.netroforge.authronom_backend.db.repository.entity.*;
 import com.github.netroforge.authronom_backend.properties.UserRegistrationProperties;
-import com.github.netroforge.authronom_backend.db.repository.primary.UserEmailVerificationRepository;
-import com.github.netroforge.authronom_backend.db.repository.primary.UserRepository;
+import com.github.netroforge.authronom_backend.db.repository.UserEmailVerificationRepository;
+import com.github.netroforge.authronom_backend.db.repository.UserRepository;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTask;
 import com.github.netroforge.authronom_backend.service.task.UserEmailConfirmationSendTaskData;
 import com.github.netroforge.authronom_backend.utils.SecurityUtils;

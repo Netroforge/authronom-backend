@@ -1,8 +1,8 @@
 package com.github.netroforge.authronom_backend.service;
 
 import com.fasterxml.uuid.Generators;
-import com.github.netroforge.authronom_backend.db.repository.primary.UserRepository;
-import com.github.netroforge.authronom_backend.db.repository.primary.entity.User;
+import com.github.netroforge.authronom_backend.db.repository.UserRepository;
+import com.github.netroforge.authronom_backend.db.repository.entity.User;
 import com.github.netroforge.authronom_backend.service.dto.CustomOidcUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;

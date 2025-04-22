@@ -14,22 +14,18 @@ spring:
     redis:
       flush-mode: on_save
   datasource:
-    primary:
-      url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5432}/${AUTHRONOM_PG_DB:dev_authronom_backend}
-      username: ${AUTHRONOM_PG_USER:postgres}
-      password: ${AUTHRONOM_PG_PASSWORD:postgres}
-      driver-class-name: "org.postgresql.Driver"
-      hikari:
-        schema: dev_authronom_backend
-      flyway:
-        enabled: true
-        locations: classpath:db/migration/primary
-        schemas: ${spring.datasource.primary.hikari.schema}
-        default-schema: ${spring.datasource.primary.hikari.schema}
-        baseline-on-migrate: true
-#      liquibase:
-#        change-log: classpath:/db/changelog/db.changelog-primary.yaml
-#        default-schema: dev_authronom_backend
+    url: jdbc:postgresql://${AUTHRONOM_PG_HOST:localhost}:${AUTHRONOM_PG_PORT:5432}/${AUTHRONOM_PG_DB:dev_authronom_backend}
+    username: ${AUTHRONOM_PG_USER:postgres}
+    password: ${AUTHRONOM_PG_PASSWORD:postgres}
+    driver-class-name: "org.postgresql.Driver"
+    hikari:
+      schema: dev_authronom_backend
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: ${spring.datasource.hikari.schema}
+    default-schema: ${spring.datasource.hikari.schema}
+    baseline-on-migrate: true
 
 springdoc:
   show-actuator: true

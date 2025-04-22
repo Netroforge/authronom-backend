@@ -1,4 +1,4 @@
-package com.github.netroforge.authronom_backend.db.repository.primary.entity;
+package com.github.netroforge.authronom_backend.db.repository.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -17,20 +17,17 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
-public class User implements Persistable<String> {
+@Table(name = "users_email_verifications")
+public class UserEmailVerification implements Persistable<String> {
     @Id
-    @Column("uid")
-    private String uid; // Firebase UID
+    @Column(value = "uid")
+    private String uid;
 
-    @Column("email")
+    @Column(value = "email")
     private String email;
 
-    @Column("password")
-    private String password;
-
-    @Column("google_id")
-    private String googleId;
+    @Column("confirmation_code")
+    private String confirmationCode;
 
     @Column("created_at")
     private LocalDateTime createdAt;

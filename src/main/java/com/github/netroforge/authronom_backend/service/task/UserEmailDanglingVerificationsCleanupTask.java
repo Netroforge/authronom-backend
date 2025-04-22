@@ -6,7 +6,7 @@ import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import com.github.netroforge.authronom_backend.properties.UserRegistrationProperties;
-import com.github.netroforge.authronom_backend.db.repository.primary.UserEmailVerificationRepository;
+import com.github.netroforge.authronom_backend.db.repository.UserEmailVerificationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
