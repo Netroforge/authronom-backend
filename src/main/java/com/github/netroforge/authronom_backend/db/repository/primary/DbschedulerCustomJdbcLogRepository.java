@@ -1,4 +1,4 @@
-package com.github.netroforge.authronom_backend.repository.db;
+package com.github.netroforge.authronom_backend.db.repository.primary;
 
 import com.github.kagkarlsson.jdbc.JdbcRunner;
 import com.github.kagkarlsson.jdbc.SQLRuntimeException;

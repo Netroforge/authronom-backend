@@ -1,7 +1,7 @@
-package com.github.netroforge.authronom_backend.repository.db;
+package com.github.netroforge.authronom_backend.db.repository.primary;
 
 
-import com.github.netroforge.authronom_backend.repository.db.entity.User;
+import com.github.netroforge.authronom_backend.db.repository.primary.entity.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

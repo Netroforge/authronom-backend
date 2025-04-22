@@ -1,4 +1,4 @@
-package com.github.netroforge.authronom_backend.repository.db.entity;
+package com.github.netroforge.authronom_backend.db.repository.primary.entity;
 
 import lombok.Data;
 

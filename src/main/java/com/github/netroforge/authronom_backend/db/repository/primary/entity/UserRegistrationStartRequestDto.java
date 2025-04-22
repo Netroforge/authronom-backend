@@ -1,4 +1,4 @@
-package com.github.netroforge.authronom_backend.repository.db.entity;
+package com.github.netroforge.authronom_backend.db.repository.primary.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,6 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserLoginRequestDto {
+public class UserRegistrationStartRequestDto {
     private String email;
-    private String password;
 }

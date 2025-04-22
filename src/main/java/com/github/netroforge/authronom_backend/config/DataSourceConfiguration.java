@@ -14,7 +14,7 @@ import org.springframework.transaction.TransactionManager;
 
 import javax.sql.DataSource;
 
-@EnableJdbcRepositories(value = "com.github.netroforge.authronom_backend.repository")
+@EnableJdbcRepositories(value = "com.github.netroforge.authronom_backend.db.repository.primary")
 @Configuration
 public class DataSourceConfiguration extends AbstractJdbcConfiguration {
     @Bean

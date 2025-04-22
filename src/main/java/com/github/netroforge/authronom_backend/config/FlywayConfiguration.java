@@ -1,10 +1,13 @@
 package com.github.netroforge.authronom_backend.config;
 
-import com.github.netroforge.authronom_backend.db.migrations.PrimaryBaseJavaMigration;
+import com.github.netroforge.authronom_backend.db.migration.primary.PrimaryBaseJavaMigration;
+import com.github.netroforge.authronom_backend.db.migration.primary.PrimaryBaselineJavaMigration;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.JavaMigration;
+import org.flywaydb.core.api.migration.baseline.BaselineJavaMigration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
@@ -15,6 +18,8 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Configuration
 public class FlywayConfiguration {
@@ -30,9 +35,16 @@ public class FlywayConfiguration {
             DataSource primaryDataSource,
             FlywayProperties primaryFlywayProperties,
             List<Callback> primaryCallbacks,
+            Optional<PrimaryBaselineJavaMigration> primaryBaselineMigrationOptional,
             List<PrimaryBaseJavaMigration> primaryMigrations
     ) {
-        return createFlyway(primaryDataSource, primaryFlywayProperties, primaryCallbacks, primaryMigrations);
+        return createFlyway(
+                primaryDataSource,
+                primaryFlywayProperties,
+                primaryCallbacks,
+                primaryBaselineMigrationOptional,
+                primaryMigrations
+        );
     }
 
     @Bean
@@ -50,7 +62,8 @@ public class FlywayConfiguration {
             DataSource dataSource,
             FlywayProperties flywayProperties,
             List<? extends Callback> callbacks,
-            List<? extends JavaMigration> migrations
+            Optional<? extends BaselineJavaMigration> baselineMigrationOptional,
+            List<? extends BaseJavaMigration> migrations
     ) {
         FluentConfiguration fluentConfiguration = Flyway.configure();
         fluentConfiguration.dataSource(dataSource);
@@ -60,7 +73,18 @@ public class FlywayConfiguration {
         fluentConfiguration.defaultSchema(flywayProperties.getDefaultSchema());
         fluentConfiguration.table(flywayProperties.getTable());
         fluentConfiguration.callbacks(callbacks.toArray(new Callback[0]));
-        fluentConfiguration.javaMigrations(migrations.toArray(new JavaMigration[0]));
+        if (baselineMigrationOptional.isPresent()) {
+            fluentConfiguration.javaMigrations(
+                    Stream.concat(
+                            Stream.of(baselineMigrationOptional.get()),
+                            migrations.stream()
+                    ).toArray(JavaMigration[]::new)
+            );
+        } else {
+            fluentConfiguration.javaMigrations(
+                    migrations.toArray(JavaMigration[]::new)
+            );
+        }
         return fluentConfiguration.load();
     }
 }

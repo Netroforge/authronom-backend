@@ -6,7 +6,7 @@ import com.github.kagkarlsson.scheduler.task.Task;
 import com.github.kagkarlsson.scheduler.task.helper.OneTimeTask;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.netroforge.authronom_backend.properties.DbschedulerProperties;
-import com.github.netroforge.authronom_backend.repository.db.DbschedulerCustomJdbcLogRepository;
+import com.github.netroforge.authronom_backend.db.repository.primary.DbschedulerCustomJdbcLogRepository;
 import com.zaxxer.hikari.HikariDataSource;
 import io.rocketbase.extension.stats.LogStatsPlainRegistry;
 import lombok.extern.slf4j.Slf4j;
