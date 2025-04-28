@@ -32,14 +32,19 @@ public class User implements Persistable<String> {
     @Column("google_id")
     private String googleId;
 
+    @Column("tenant_uid")
+    private String tenantUid;
+
     @Column("created_at")
     private LocalDateTime createdAt;
 
     @Column("updated_at")
     private LocalDateTime updatedAt;
 
-    // Needed to have possibility to use save method of repository for new entities that have id set to not null
-    // Inspired by https://github.com/spring-projects/spring-data-relational/issues/507
+    // Needed to have possibility to use save method of repository for new entities
+    // that have id set to not null
+    // Inspired by
+    // https://github.com/spring-projects/spring-data-relational/issues/507
     @Transient
     @JsonIgnore
     private boolean isNew;

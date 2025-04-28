@@ -1,7 +1,7 @@
 services:
   authronom-backend-postgres:
     container_name: authronom-backend-postgres
-    image: postgres:17.3
+    image: postgres:17.4
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
@@ -24,7 +24,7 @@ services:
 
   authronom-backend-redis:
     container_name: authronom-backend-redis
-    image: redis:7.4.2
+    image: redis:7.4.3
     command: redis-server --save 20 1 --loglevel warning --requirepass redis
     ports:
       - '6379:6379'
@@ -38,7 +38,7 @@ services:
   # Inspired by https://mailpit.axllent.org/docs/install/docker/#docker-compose-example
   authronom-backend-mailpit:
     container_name: authronom-backend-mailpit
-    image: axllent/mailpit:v1.24
+    image: axllent/mailpit:v1.24.1
     volumes:
       - type: volume
         source: mailpit-data

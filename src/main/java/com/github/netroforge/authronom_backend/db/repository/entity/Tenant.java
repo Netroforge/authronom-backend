@@ -17,31 +17,22 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users_email_verifications")
-public class UserEmailVerification implements Persistable<String> {
+@Table(name = "tenants")
+public class Tenant implements Persistable<String> {
     @Id
-    @Column(value = "uid")
+    @Column("uid")
     private String uid;
 
-    @Column(value = "email")
-    private String email;
-
-    @Column("confirmation_code")
-    private String confirmationCode;
-
-    @Column("tenant_uid")
-    private String tenantUid;
-
+    @Column("name")
+    private String name;
+    
     @Column("created_at")
     private LocalDateTime createdAt;
 
     @Column("updated_at")
     private LocalDateTime updatedAt;
 
-    // Needed to have possibility to use save method of repository for new entities
-    // that have id set to not null
-    // Inspired by
-    // https://github.com/spring-projects/spring-data-relational/issues/507
+    // Needed to have possibility to use save method of repository for new entities that have id set to not null
     @Transient
     @JsonIgnore
     private boolean isNew;

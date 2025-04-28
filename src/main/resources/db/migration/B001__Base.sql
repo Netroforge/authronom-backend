@@ -1,3 +1,5 @@
+------------------------------------------------------------------------------------------------------------------------
+-- db-scheduler
 -- From https://github.com/kagkarlsson/db-scheduler/blob/master/db-scheduler/src/test/resources/postgresql_tables.sql
 create table scheduled_tasks (
     task_name TEXT NOT NULL,
@@ -41,8 +43,58 @@ CREATE INDEX stl_started_idx ON scheduled_execution_logs (time_started);
 CREATE INDEX stl_task_name_idx ON scheduled_execution_logs (task_name);
 CREATE INDEX stl_exception_class_idx ON scheduled_execution_logs (exception_class);
 
+------------------------------------------------------------------------------------------------------------------------
+-- Tenants
+CREATE TABLE tenants (
+    uid VARCHAR(128) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
+
+-- Create app-level parameter for current tenant
+CREATE OR REPLACE FUNCTION set_current_tenant() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.tenant_uid IS NULL THEN
+        NEW.tenant_uid := current_setting('app.current_tenant', FALSE);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+------------------------------------------------------------------------------------------------------------------------
+-- User
+CREATE TABLE users (
+    uid VARCHAR(128) PRIMARY KEY,
+    tenant_uid VARCHAR(128) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    password VARCHAR(255) NULL,
+    google_id VARCHAR(255) NULL,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
+
+-- Enable Row-Level Security on tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Create triggers to automatically set tenant_id
+CREATE TRIGGER set_tenant_id_on_users
+    BEFORE INSERT
+    ON users
+    FOR EACH ROW
+EXECUTE FUNCTION set_current_tenant();
+
+-- Create RLS policies
+CREATE POLICY tenant_isolation_policy_users ON users
+    USING (tenant_uid = current_setting('app.current_tenant', FALSE));
+
+------------------------------------------------------------------------------------------------------------------------
+-- User email verification
 CREATE TABLE users_email_verifications (
     uid VARCHAR(128) PRIMARY KEY,
+    tenant_uid VARCHAR(128) NOT NULL,
     email VARCHAR(255) NOT NULL,
     confirmation_code VARCHAR(255) NOT NULL,
 
@@ -52,12 +104,16 @@ CREATE TABLE users_email_verifications (
 
 CREATE INDEX users_email_verifications_email_confirmation_code_idx ON users_email_verifications USING btree (email, confirmation_code) WITH (FILLFACTOR = 30);
 
-CREATE TABLE users (
-    uid VARCHAR(128) PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255) NULL,
-    google_id VARCHAR(255) NULL,
+-- Enable Row-Level Security on tables
+ALTER TABLE users_email_verifications ENABLE ROW LEVEL SECURITY;
 
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-);
+-- Create triggers to automatically set tenant_id
+CREATE TRIGGER set_tenant_id_on_users_email_verifications
+    BEFORE INSERT
+    ON users_email_verifications
+    FOR EACH ROW
+EXECUTE FUNCTION set_current_tenant();
+
+-- Create RLS policies
+CREATE POLICY tenant_isolation_policy_users_email_verifications ON users_email_verifications
+    USING (tenant_uid = current_setting('app.current_tenant', FALSE));
