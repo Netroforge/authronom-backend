@@ -227,20 +227,6 @@ public class SecurityConfig {
             SecurityProperties securityProperties
     ) throws Exception {
         http
-//                .securityMatcher(
-//                        new AndRequestMatcher(
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/status")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/login")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/public/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/db-scheduler/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/db-scheduler-api/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/swagger-ui/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/v3/api-docs/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/admin/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/auth/**")),
-//                                new NegatedRequestMatcher(new AntPathRequestMatcher("/error"))
-//                        )
-//                )
                 .sessionManagement(session ->
                         session
                                 // Optional: Set session timeout

@@ -7,13 +7,13 @@ import com.github.kagkarlsson.scheduler.task.helper.OneTimeTask;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.netroforge.authronom_backend.properties.DbschedulerProperties;
 import com.github.netroforge.authronom_backend.db.repository.DbschedulerCustomJdbcLogRepository;
-import com.zaxxer.hikari.HikariDataSource;
 import io.rocketbase.extension.stats.LogStatsPlainRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DbschedulerService implements InitializingBean, DisposableBean {
-    private final HikariDataSource primaryDataSource;
+    private final DataSource dataSource;
     private final DbschedulerProperties dbschedulerProperties;
     private final DbschedulerCustomJdbcLogRepository dbSchedulerCustomJdbcLogRepository;
     private final List<OneTimeTask<?>> knownOneTimeTasks;
@@ -30,13 +30,13 @@ public class DbschedulerService implements InitializingBean, DisposableBean {
     private Scheduler scheduler;
 
     public DbschedulerService(
-            HikariDataSource primaryDataSource,
+            DataSource dataSource,
             DbschedulerProperties dbschedulerProperties,
             DbschedulerCustomJdbcLogRepository dbSchedulerCustomJdbcLogRepository,
             List<OneTimeTask<?>> knownOneTimeTasks,
             List<RecurringTask<?>> knownRecurringTaskTasks
     ) {
-        this.primaryDataSource = primaryDataSource;
+        this.dataSource = dataSource;
         this.dbschedulerProperties = dbschedulerProperties;
         this.dbSchedulerCustomJdbcLogRepository = dbSchedulerCustomJdbcLogRepository;
         this.knownOneTimeTasks = knownOneTimeTasks;
@@ -47,7 +47,7 @@ public class DbschedulerService implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() {
         scheduler = Scheduler
                 .create(
-                        primaryDataSource,
+                        dataSource,
                         knownOneTimeTasks
                                 .stream()
                                 .map((Function<OneTimeTask<?>, Task<?>>) oneTimeTask -> oneTimeTask)

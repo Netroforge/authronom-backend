@@ -14,6 +14,7 @@ import io.rocketbase.extension.jdbc.Snowflake;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.io.NotSerializableException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -35,12 +36,12 @@ public class DbschedulerCustomJdbcLogRepository implements LogRepository {
     private final IdProvider idProvider;
 
     public DbschedulerCustomJdbcLogRepository(
-            HikariDataSource primaryDataSource
+            DataSource dataSource
     ) {
         this.tableName = DEFAULT_TABLE_NAME;
-        this.jdbcRunner = new JdbcRunner(primaryDataSource, true);
+        this.jdbcRunner = new JdbcRunner(dataSource, true);
         this.serializer = new JavaSerializer();
-        this.jdbcCustomization = new AutodetectJdbcCustomization(primaryDataSource);
+        this.jdbcCustomization = new AutodetectJdbcCustomization(dataSource);
         this.idProvider = new Snowflake();
     }
 

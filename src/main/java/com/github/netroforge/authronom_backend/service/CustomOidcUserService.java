@@ -70,6 +70,4 @@ public class CustomOidcUserService extends OidcUserService {
                 oidcUser.getUserInfo()
         );
     }
-
-
 }

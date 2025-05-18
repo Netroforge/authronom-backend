@@ -8,6 +8,7 @@ import com.github.kagkarlsson.scheduler.task.helper.OneTimeTask;
 import com.github.netroforge.authronom_backend.properties.UserRegistrationProperties;
 import com.github.netroforge.authronom_backend.db.repository.UserEmailVerificationRepository;
 import com.github.netroforge.authronom_backend.db.repository.entity.UserEmailVerification;
+import com.github.netroforge.authronom_backend.utils.TenantContextHolder;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
@@ -23,8 +24,8 @@ import java.time.ZoneOffset;
 @Slf4j
 @Service
 public class UserEmailConfirmationSendTask extends OneTimeTask<UserEmailConfirmationSendTaskData> {
-    private static final TaskDescriptor<UserEmailConfirmationSendTaskData> TASK_DESCRIPTOR =
-            TaskDescriptor.of(UserEmailConfirmationSendTask.class.getSimpleName(), UserEmailConfirmationSendTaskData.class);
+    private static final TaskDescriptor<UserEmailConfirmationSendTaskData> TASK_DESCRIPTOR = TaskDescriptor
+            .of(UserEmailConfirmationSendTask.class.getSimpleName(), UserEmailConfirmationSendTaskData.class);
 
     private final JavaMailSender javaMailSender;
     private final UserRegistrationProperties userRegistrationProperties;
@@ -35,8 +36,7 @@ public class UserEmailConfirmationSendTask extends OneTimeTask<UserEmailConfirma
             JavaMailSender javaMailSender,
             UserRegistrationProperties userRegistrationProperties,
             UserEmailVerificationRepository userEmailVerificationRepository,
-            SpringTemplateEngine springTemplateEngine
-    ) {
+            SpringTemplateEngine springTemplateEngine) {
         super(TASK_DESCRIPTOR.getTaskName(), TASK_DESCRIPTOR.getDataClass());
         this.javaMailSender = javaMailSender;
         this.userRegistrationProperties = userRegistrationProperties;
@@ -51,18 +51,17 @@ public class UserEmailConfirmationSendTask extends OneTimeTask<UserEmailConfirma
     @Override
     public void executeOnce(
             TaskInstance<UserEmailConfirmationSendTaskData> taskInstance,
-            ExecutionContext executionContext
-    ) {
+            ExecutionContext executionContext) {
         try {
-            // Save email confirmation code to db
-            UserEmailVerification userEmailVerification = new UserEmailVerification(
-                    Generators.timeBasedEpochGenerator().generate().toString(),
-                    taskInstance.getData().getEmail(),
-                    taskInstance.getData().getConfirmationCode(),
-                    LocalDateTime.now(ZoneOffset.UTC),
-                    LocalDateTime.now(ZoneOffset.UTC),
-                    true
-            );
+
+            UserEmailVerification userEmailVerification = new UserEmailVerification();
+            userEmailVerification.setUid(Generators.timeBasedEpochGenerator().generate().toString());
+            userEmailVerification.setEmail(taskInstance.getData().getEmail());
+            userEmailVerification.setConfirmationCode(taskInstance.getData().getConfirmationCode());
+            userEmailVerification.setTenantUid(tenantUid);
+            userEmailVerification.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            userEmailVerification.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            userEmailVerification.setNew(true);
             userEmailVerificationRepository.save(userEmailVerification);
 
             // Form email content in html
@@ -75,7 +74,8 @@ public class UserEmailConfirmationSendTask extends OneTimeTask<UserEmailConfirma
             message.setContent(htmlContent, "text/html; charset=utf-8");
 
             MimeMessageHelper helper = new MimeMessageHelper(message, false);
-            helper.setFrom(userRegistrationProperties.getConfirmationEmailFrom(), userRegistrationProperties.getConfirmationEmailFromName());
+            helper.setFrom(userRegistrationProperties.getConfirmationEmailFrom(),
+                    userRegistrationProperties.getConfirmationEmailFromName());
             helper.setSubject(userRegistrationProperties.getConfirmationEmailSubject());
             helper.setTo(taskInstance.getData().getEmail());
 
